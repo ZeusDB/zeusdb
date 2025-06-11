@@ -1,6 +1,6 @@
 # ZeusDB
 
-<div align="center">
+<div align="left">
   <table>
     <tr>
       <td><strong>Meta</strong></td>
@@ -39,6 +39,7 @@ ZeusDB serves as the backbone for demanding applications, offering advanced feat
 
 Whether you are building a GenAI backend, managing large-scale time-series data, or architecting a unified analytics layer, ZeusDB gives you the foundation to move fast and with incredible scale.
 
+<br/>
 
 ## 📦 Installation
 
