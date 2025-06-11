@@ -1,0 +1,40 @@
+# This workflow checks the zeusdb package.
+# It DOES NOT publish to PyPI, but prepares the package for manual review.
+# This workflow runs manually (via workflow_dispatch).
+# This workflow is useful for verifying the package contents before publishing.
+name: Check Package (without publishing to PyPI)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Tools
+        run: pip install hatch twine
+
+      - name: Build package
+        run: hatch build
+
+      - name: Inspect build artifacts
+        run: |
+          echo "Contents of dist/ directory:"
+          ls -lh dist/
+          echo ""
+          echo "File types of artifacts:"
+          file dist/* || true
+
+      - name: Validate distribution metadata with Twine
+        run: twine check dist/*
