@@ -40,7 +40,9 @@ keywords = [
   "approximate nearest neighbor",
   "approximate nearest neighbor search",
 ]
-dependencies = []
+dependencies = [
+  "zeusdb-vector-database>=0.0.1",
+]
 
 [build-system]
 requires = ["hatchling"]
