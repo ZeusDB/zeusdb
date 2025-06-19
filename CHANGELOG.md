@@ -28,14 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Declared zeusdb-vector-database>=0.0.1 as a required dependency in pyproject.toml to ensure correct module availability during import.
 
-### Changed
-<!-- Add changed behavior here -->
-
 ### Fixed
 - Fixed and clarified the code example in the README.
-
-### Removed
-<!-- Add removals/deprecations here -->
 
 ---
 
