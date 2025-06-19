@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Add changed behavior here -->
 
 ### Fixed
-<!-- Add bug fixes here -->
+- Fixed and clarified the code example in the README.
 
 ### Removed
 <!-- Add removals/deprecations here -->
