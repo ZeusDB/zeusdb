@@ -1,6 +1,6 @@
 [project]
 name = "zeusdb"
-version = "0.0.1"
+version = "0.0.2"
 description = "Ultra-light and blazingly-fast database management system"
 readme = "README.md"
 authors = [
