@@ -23,6 +23,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.0.3]
+
+### Added
+- Introduced modular __init__.py in the zeusdb package. This change improves robustness for partial installations and prepares the master package for a plugin-based or modular architecture.
+
+- Added version constant __version__ = "0.0.3".
+
+### Changed
+- __init__.py now uses try/except ImportError blocks to gracefully handle optional submodule imports:
+  - VectorDatabase from zeusdb_vector_database
+  - (Placeholders for RelationalDatabase, GraphDatabase, and DocumentDatabase included and commented out)
+
+- Dynamically builds __all__ to expose only successfully imported components.
+
+- Suppressed Ruff F401 linter warning for unused imports by using # noqa: F401 inline, since imports are re-exported via __all__. The inline suppression (# noqa: F401) avoids disabling linting globally, keeping lint checks strict and helpful elsewhere in the codebase.
+
+### Fixed
+<!-- Add bug fixes here -->
+
+### Removed
+<!-- Add removals/deprecations here -->
+
+---
+
 ## [0.0.2] - 2025-06-19
 
 ### Added
