@@ -26,24 +26,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.3]
 
 ### Added
-- Introduced modular __init__.py in the zeusdb package. This change improves robustness for partial installations and prepares the master package for a plugin-based or modular architecture.
+- Introduced modular `__init__.py` in the `zeusdb` package. This change improves robustness for partial installations and prepares the master package for a plugin-based or modular architecture.
 
-- Added version constant __version__ = "0.0.3".
+- Added version constant `__version__ = "0.0.3"`.
+
+- Implemented module-level `__getattr__` to support **lazy loading** of database backends (PEP 562).
+
+- Added `__dir__()` for better introspection and tab-completion in REPLs and IDEs.
+
+- Included clear and actionable error messages when optional submodules are accessed but not installed.
+
 
 ### Changed
-- __init__.py now uses try/except ImportError blocks to gracefully handle optional submodule imports:
-  - VectorDatabase from zeusdb_vector_database
-  - (Placeholders for RelationalDatabase, GraphDatabase, and DocumentDatabase included and commented out)
+- Replaced `try/except ImportError` eager imports with `__getattr__` to defer loading of submodules until explicitly accessed.
 
-- Dynamically builds __all__ to expose only successfully imported components.
+- `VectorDatabase` is currently active; other backends (`RelationalDatabase`, `GraphDatabase`, `DocumentDatabase`) are present as commented placeholders for future releases.
 
-- Suppressed Ruff F401 linter warning for unused imports by using # noqa: F401 inline, since imports are re-exported via __all__. The inline suppression (# noqa: F401) avoids disabling linting globally, keeping lint checks strict and helpful elsewhere in the codebase.
+- Dynamic population of `__all__` now occurs inside `__getattr__` after successful imports to keep it accurate and reflective of availability.
+
 
 ### Fixed
 <!-- Add bug fixes here -->
 
 ### Removed
-<!-- Add removals/deprecations here -->
+- Removed eager import pattern using `try/except` blocks from `__init__.py`.
 
 ---
 
