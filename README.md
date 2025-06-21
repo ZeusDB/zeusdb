@@ -57,9 +57,19 @@ pip install zeusdb
 
 <br/>
 
+## 🔧 Environment Variables
 
+ZeusDB respects several environment variables for configuration:
 
-## ZeusDB Vector Database
+- `ZEUSDB_SKIP_VERSION_CHECK=1` - Disable automatic version checking
+- `CI=1` - Automatically detected in CI/CD environments to disable version checking
+- `ZEUSDB_OFFLINE_MODE=1` - Disable all network operations during imports
+
+**Note:** ZeusDB automatically checks for the latest versions of its components and will warn you if updates are available. You can disable this in CI/CD environments by setting `CI=1` or `ZEUSDB_SKIP_VERSION_CHECK=1`.
+
+<br/>
+
+## [ ] ZeusDB Vector Database
 
 ### Quick Start Example 
 
