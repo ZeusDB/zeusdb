@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.3]
 
 ### Added
-- Introduced modular `__init__.py` in the `zeusdb` package. This change improves robustness for partial installations and prepares the master package for a plugin-based or modular architecture.
+- Introduced modular `__init__.py` using `__getattr__()` for PEP 562-style lazy loading of database backends like `VectorDatabase`. This change improves robustness for partial installations and prepares the master package for a plugin-based or modular architecture.
 
 - Added version constant `__version__ = "0.0.3"`.
 
@@ -36,20 +36,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Included clear and actionable error messages when optional submodules are accessed but not installed.
 
+- Added helpful runtime warnings when installed packages are outdated compared to PyPI.
+
+- Added `import_database_class()` to dynamically import database classes based on configuration.
+
+- Added `_utils.py` containing:
+  - `get_latest_pypi_version()` for cached PyPI version retrieval.
+  - `check_package_version()` for installed package validation and warning if outdated.
+  - `should_check_versions()` to suppress version checks in CI, offline, or env-flagged contexts.
+  - `ZEUSDB_PACKAGES` registry to manage and extend backend database support.
+
+- Added `test_missing_modules.py` with tests covering:
+  - AttributeError messaging for undefined database types.
+  - Case sensitivity of attribute access.
+  - Expected attributes in `__all__` and `__dir__`.
 
 ### Changed
-- Replaced `try/except ImportError` eager imports with `__getattr__` to defer loading of submodules until explicitly accessed.
+- Replaced eager `try/except ImportError` block-based loading with centralized, dynamic imports using `import_database_class()` from `_utils.py`.
 
-- `VectorDatabase` is currently active; other backends (`RelationalDatabase`, `GraphDatabase`, `DocumentDatabase`) are present as commented placeholders for future releases.
+- Reorganized `__all__` to be static and Pylance-compatible, with type hints provided separately for static analysis.
 
-- Dynamic population of `__all__` now occurs inside `__getattr__` after successful imports to keep it accurate and reflective of availability.
+- Suppressed Pyright warnings using `# pyright: reportUnsupportedDunderAll=false` to support dynamic symbol declarations.
+
+- `VectorDatabase` remains the only active backend; additional backends (`RelationalDatabase`, `GraphDatabase`, `DocumentDatabase`) are included as placeholders in configuration and docstrings for future expansion.
 
 
 ### Fixed
 <!-- Add bug fixes here -->
 
 ### Removed
-- Removed eager import pattern using `try/except` blocks from `__init__.py`.
+- Removed outdated eager import logic from `__init__.py`, reducing import-time overhead and making the package plugin-friendly.
 
 ---
 
