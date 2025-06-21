@@ -37,7 +37,7 @@ ZeusDB serves as the backbone for demanding applications, offering advanced feat
 
   - DevOps-ready deployment across cloud or on-prem, with version-controlled configuration, observability hooks, and minimal operational overhead.
 
-Whether you are building a GenAI backend, managing large-scale time-series data, or architecting a unified analytics layer, ZeusDB gives you the foundation to move fast and with incredible scale.
+Whether you are building a GenAI backend, managing large-scale time-series data, or architecting a unified analytics layer, ZeusDB gives you the foundation to move fast, at scale, with the flexibility of modular architecture.
 
 <br/>
 
