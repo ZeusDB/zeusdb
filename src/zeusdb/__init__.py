@@ -15,7 +15,9 @@ If a required package is missing, helpful installation instructions are provided
 
 Environment Variables:
     ZEUSDB_SKIP_VERSION_CHECK: Set to '1' to disable version checking
-    CI: Automatically disables version checking in CI environments
+    CI / PYTHONOFFLINE / NO_NETWORK / ZEUSDB_OFFLINE_MODE: 
+        These common environment flags also automatically disable version checks 
+        in CI pipelines or offline environments.
 """
 from typing import Any
 from ._utils import import_database_class
