@@ -1,66 +1,44 @@
+# pyright: reportUnsupportedDunderAll=false
 """
-ZeusDB - A modular database ecosystem
+ZeusDB - A modular database ecosystem.
+
+This package provides lazy access to database modules like `VectorDatabase`,
+which are optionally installable plugins. Modules are only imported when
+accessed, and their versions are checked against PyPI for freshness.
+
+Example:
+    >>> from zeusdb import VectorDatabase  # Only imports if zeusdb-vector-database is installed
+    >>> db = VectorDatabase()
+
+Available database types are dynamically determined based on installed packages.
+If a required package is missing, helpful installation instructions are provided.
+
+Environment Variables:
+    ZEUSDB_SKIP_VERSION_CHECK: Set to '1' to disable version checking
+    CI: Automatically disables version checking in CI environments
 """
 from typing import Any
+from ._utils import import_database_class
 
 __version__ = "0.0.3"
 
-__all__ = []
+# Explicit export list to satisfy Pylance and other static analyzers
+__all__ = [
+    "__version__",
+    "VectorDatabase",
+    # "RelationalDatabase",      # Uncomment when supported
+    # "GraphDatabase",           # Uncomment when supported
+    # "DocumentDatabase",        # Uncomment when supported
+]
 
 def __getattr__(name: str) -> Any:
-    if name == "VectorDatabase":
-        try:
-            from zeusdb_vector_database import VectorDatabase
-            __all__.append("VectorDatabase")
-            return VectorDatabase
-        except ImportError:
-            raise ImportError(
-                "VectorDatabase requires zeusdb-vector-database.\n"
-                "Install with: uv pip install zeusdb-vector-database"
-            )
+    """Dynamically import database classes on first access."""
+    try:
+        return import_database_class(name)
+    except AttributeError:
+        raise AttributeError(f"module 'zeusdb' has no attribute '{name}'")
 
-    # Future modules — will be uncommented when available
-
-    # elif name == "RelationalDatabase":
-    #     try:
-    #         from zeusdb_relational_database import RelationalDatabase
-    #         __all__.append("RelationalDatabase")
-    #         return RelationalDatabase
-    #     except ImportError:
-    #         raise ImportError(
-    #             "RelationalDatabase requires zeusdb-relational-database.\n"
-    #             "Install with: uv pip install zeusdb-relational-database"
-    #         )
-
-    # elif name == "GraphDatabase":
-    #     try:
-    #         from zeusdb_graph_database import GraphDatabase
-    #         __all__.append("GraphDatabase")
-    #         return GraphDatabase
-    #     except ImportError:
-    #         raise ImportError(
-    #             "GraphDatabase requires zeusdb-graph-database.\n"
-    #             "Install with: uv pip install zeusdb-graph-database"
-    #         )
-
-    # elif name == "DocumentDatabase":
-    #     try:
-    #         from zeusdb_document_database import DocumentDatabase
-    #         __all__.append("DocumentDatabase")
-    #         return DocumentDatabase
-    #     except ImportError:
-    #         raise ImportError(
-    #             "DocumentDatabase requires zeusdb-document-database.\n"
-    #             "Install with: uv pip install zeusdb-document-database"
-    #         )
-
-    raise AttributeError(f"module 'zeusdb' has no attribute '{name}'")
 
 def __dir__():
-    return sorted([
-        "__version__",
-        "VectorDatabase",
-        # "RelationalDatabase",  # Future
-        # "GraphDatabase",       # Future
-        # "DocumentDatabase",    # Future
-    ])
+    """Return available attributes for tab completion."""
+    return __all__
