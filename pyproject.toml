@@ -41,7 +41,7 @@ keywords = [
   "approximate nearest neighbor search",
 ]
 dependencies = [
-  "zeusdb-vector-database>=0.0.1",
+  "zeusdb-vector-database>=0.0.2",
 ]
 
 [build-system]
