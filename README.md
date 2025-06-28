@@ -1,6 +1,10 @@
-# ZeusDB
+<p align="center" width="100%">
+  <img src="https://github.com/user-attachments/assets/d2c33f8d-ba76-444e-89a5-96b572a25120" />
+  <h1 align="center">ZeusDB</h1>
+</p>
 
-<div align="left">
+
+<div align="center">
   <table>
     <tr>
       <td><strong>Meta</strong></td>
