@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.3]
+## [0.0.4] - 2025-06-27
+
+### Added
+- Introduced a plugin architecture in `__init__.py` using `_PACKAGE_MAP` for dynamic class resolution.
+- Implemented lazy loading via `__getattr__()` to import database modules only when accessed.
+- Automatically synced `__all__` with available plugin names for static analyzers and IDE tab-completion.
+- Enhanced `ImportError` messages with actionable install instructions (`uv` and `pip`).
+- Added `__dir__()` override to improve developer experience when exploring the package interactively.
+
+### Changed
+- `__init__.py` is now fully self-contained and no longer relies on `_utils.py`.
+- Removed runtime version checking in favor of relying on proper dependency management through `pyproject.toml`.
+
+### Fixed
+- Future plugins can be added to `_PACKAGE_MAP` without changing the core logic
+- The package now avoids all network operations during import
+
+### Removed
+- Removed `_utils.py` and all related logic:
+  - Version checking logic against PyPI (`get_latest_pypi_version`, `check_package_version`)
+  - Environment variable support for disabling version checks (`ZEUSDB_SKIP_VERSION_CHECK`, `CI`, etc.)
+  - PyPI network dependency on import
+
+---
+
+## [0.0.3] - 2025-06-27
 
 ### Added
 - Introduced modular `__init__.py` using `__getattr__()` for PEP 562-style lazy loading of database backends like `VectorDatabase`. This change improves robustness for partial installations and prepares the master package for a plugin-based or modular architecture.
@@ -43,10 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Suppressed Pyright warnings using `# pyright: reportUnsupportedDunderAll=false` to support dynamic symbol declarations.
 
 - `VectorDatabase` remains the only active backend; additional backends (`RelationalDatabase`, `GraphDatabase`, `DocumentDatabase`) are included as placeholders in configuration and docstrings for future expansion.
-
-
-### Fixed
-<!-- Add bug fixes here -->
 
 ### Removed
 - Removed outdated eager import logic from `__init__.py`, reducing import-time overhead and making the package plugin-friendly.
