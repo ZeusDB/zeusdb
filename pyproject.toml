@@ -44,6 +44,15 @@ dependencies = [
   "zeusdb-vector-database>=0.3.0",
 ]
 
+[project.optional-dependencies]
+docs = [
+  "sphinx",
+  "pydata-sphinx-theme",
+  "myst-parser",
+  "sphinx-autobuild"
+]
+
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
