@@ -46,7 +46,7 @@ Whether you are building a GenAI backend, managing large-scale time-series data,
 
 <br/>
 
-## 📦 Installation
+## 🛠️ Installation
 
 You can install ZeusDB with 'uv' or alternatively using 'pip'.
 
@@ -62,9 +62,35 @@ pip install zeusdb
 
 <br/>
 
-## ZeusDB Vector Database
+## 📦 ZeusDB Vector Database
 
-### Quick Start Example 
+ZeusDB Vector Database is a high-performance, Rust-powered vector database built for fast and scalable similarity search across high-dimensional embeddings. Designed for modern machine learning and AI workloads, it provides efficient approximate nearest neighbor (ANN) search, supports real-time querying at scale, and seamlessly transitions from in-memory performance to durable disk persistence.
+
+Whether you're powering document search, enabling natural language interfaces, or building custom vector-based tools, ZeusDB offers a lightweight, extensible foundation for high-performance vector retrieval. It’s also well-suited for Retrieval-Augmented Generation (RAG) pipelines, where fast and semantically rich context retrieval is critical to enhancing large language model (LLM) responses.
+
+<br/>
+
+### ⭐ Features
+
+*"Start fast. Tune deep. Build for any scale."*
+
+🐍 User-friendly Python API for adding vectors and running similarity searches
+
+🔥 High-performance Rust backend optimized for speed and concurrency
+
+🔍 Approximate Nearest Neighbor (ANN) search using HNSW for lightning fast results
+
+📦 Product Quantization (PQ) for compact storage, faster distance computations, and scalability for Big Data
+
+📥 Flexible input formats, including native Python types and NumPy arrays
+
+🗂️ Metadata filtering for precise and contextual querying
+
+💾 Save and reload full indexes, metadata, and quantized vectors across systems
+
+<br/>
+
+### 🔥 Quick Start Example 
 
 ```python
 # Import the vector database module
