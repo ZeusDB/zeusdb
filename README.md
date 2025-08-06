@@ -94,7 +94,7 @@ Whether you're powering document search, enabling natural language interfaces, o
 
 ```python
 # Import the vector database module
-from zeusdb_vector_database import VectorDatabase
+from zeusdb import VectorDatabase
 
 # Instantiate the VectorDatabase class
 vdb = VectorDatabase()
