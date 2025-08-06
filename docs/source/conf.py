@@ -42,6 +42,8 @@ html_theme_options = {
     ],
     "logo": {
         "text": "ZeusDB",
+        "image_light": "_static/zeusdb-logo.svg",
+        "image_dark": "_static/zeusdb-logo.svg",
     },
     "show_nav_level": 3,  # Controls how deep nested sidebar nav goes
     "navigation_with_keys": True, # enables keyboard navigation shortcuts between documentation pages using your left and right arrow keys.
