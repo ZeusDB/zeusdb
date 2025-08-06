@@ -1,6 +1,6 @@
 [project]
 name = "zeusdb"
-version = "0.0.4"
+version = "0.0.5"
 description = "Ultra-light and blazingly-fast database management system"
 readme = "README.md"
 authors = [
@@ -41,7 +41,7 @@ keywords = [
   "approximate nearest neighbor search",
 ]
 dependencies = [
-  "zeusdb-vector-database>=0.0.2",
+  "zeusdb-vector-database>=0.3.0",
 ]
 
 [build-system]
