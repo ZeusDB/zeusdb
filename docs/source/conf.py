@@ -16,7 +16,7 @@ release = '0.0.6'
 
 extensions = [
     "myst_parser",
-    "sphinx_panels",
+    "sphinx_design",
 ]
 
 templates_path = ['_templates']
