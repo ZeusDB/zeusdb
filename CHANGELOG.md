@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.0.5] - 2025-08-26
+
+### Changed
+- Updated the `README.md` to include a revised Quick Start example that better reflects the current ZeusDB Vector Database API
+- Updated dependency to require `zeusdb-vector-database>=0.3.0` in `pyproject.toml`
+
+---
+
 ## [0.0.4] - 2025-06-27
 
 ### Added
@@ -94,8 +102,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `publish-pypi.yml` for trusted publishing to PyPI.
   - `publish-check.yml` for build verification without publishing.
 - `CHANGELOG.md` following Keep a Changelog format.
-
-### Fixed
 
 ---
 
