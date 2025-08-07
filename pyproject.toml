@@ -51,6 +51,7 @@ docs = [
   "myst-parser",
   "sphinx-autobuild",
   "sphinx-design",
+  "linkify-it-py",
 ]
 
 
