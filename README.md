@@ -3,7 +3,6 @@
   <h1 align="center">ZeusDB</h1>
 </p>
 
-
 <div align="center">
   <table>
     <tr>
