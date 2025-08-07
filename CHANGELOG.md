@@ -7,10 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.6] - 2025-
+## [0.0.6] - 2025-08-08
 
 ### Added
-<!-- Add new features here -->
+- Comprehensive API documentation with detailed examples and parameter references
+
+- Read the Docs integration with custom domain (docs.zeusdb.com)
+
+- Documentation pages for Create, Add Data, Search, and Persistence operations
+
+- Product Quantization configuration guide with usage examples
+
+- Sphinx-based documentation system with MyST parser and pydata theme
+
+- Interactive code examples with expected outputs for all core operations
+
+- Documentation badge in README linking to hosted docs
 
 ### Changed
 <!-- Add changed behavior here -->
@@ -23,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.5] - 2025-08-26
+## [0.0.5] - 2025-08-06
 
 ### Changed
 - Updated the `README.md` to include a revised Quick Start example that better reflects the current ZeusDB Vector Database API
