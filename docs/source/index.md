@@ -15,8 +15,10 @@ Explore the modules, get started quickly, and build with confidence.
 :shadow: md
 :text-align: center
 :padding: 3
+:link: installation.html
 
-<img src="_static/zeusdb-core-logo.svg" alt="Installation" width="64" height="64" style="margin-bottom: 1rem;">
+
+<img src="_static/zeusdb-core-logo.svg" alt="Installation" width="52" height="52" style="margin-bottom: 1rem;">
 
 **[ZeusDB Core Installation](installation.md)**  
 Set up and install the ZeusDB package.
@@ -26,8 +28,9 @@ Set up and install the ZeusDB package.
 :shadow: md
 :text-align: center
 :padding: 3
+:link: vector_database/index.html
 
-<img src="_static/zeusdb-vector-database-logo.svg" alt="Installation" width="64" height="64" style="margin-bottom: 1rem;">
+<img src="_static/zeusdb-vector-database-logo.svg" alt="Installation" width="52" height="52" style="margin-bottom: 1rem;">
 
 **[ZeusDB Vector Database](vector_database/index.md)**  
 Explore the high-performance vector database module.
@@ -39,4 +42,3 @@ Explore the high-performance vector database module.
 :caption: Module Navigation
 :hidden:
 vector_database/index.md
-installation.md

@@ -30,6 +30,8 @@ exclude_patterns = []
 html_theme = "pydata_sphinx_theme"
 html_static_path = ['_static']
 
+html_favicon = "_static/favicon.ico"
+
 html_theme_options = {
     "navbar_start": ["navbar-logo"],
     "navbar_end": ["theme-switcher", "navbar-icon-links"],
@@ -45,7 +47,7 @@ html_theme_options = {
         "image_light": "_static/zeusdb-logo.svg",
         "image_dark": "_static/zeusdb-logo.svg",
     },
-    "show_nav_level": 3,  # Controls how deep nested sidebar nav goes
+    "show_nav_level": 2,  # Controls how deep nested sidebar nav goes
     "navigation_with_keys": True, # enables keyboard navigation shortcuts between documentation pages using your left and right arrow keys.
     "secondary_sidebar_items": [],  # <– disables "On this page" sidebar
 }
