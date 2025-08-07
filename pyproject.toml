@@ -61,4 +61,5 @@ build-backend = "hatchling.build"
 
 [project.urls]
 "Repository" = "https://github.com/zeusdb/zeusdb"
+"Documentation" = "https://docs.zeusdb.com"
 "Bug Tracker" = "https://github.com/zeusdb/zeusdb/issues"
