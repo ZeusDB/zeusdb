@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logo-title">
+  <defs>
+    <linearGradient id="logoGradient" x1="100" y1="170" x2="100" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5a37f7"/>
+      <stop offset="1" stop-color="#29a1f9"/>
+    </linearGradient>
+  </defs>
+  
+  <title id="logo-title">ZeusDB</title>
+  <desc>ZeusDB is a next-generation, high-performance data platform designed for modern AI, ML, and real-time analysis.</desc>
+  
+  <circle cx="100" cy="100" r="70" fill="url(#logoGradient)"/>
+  
+  <g transform="translate(-1.5252664,-6.9357903)">
+    <path d="m 116.94514,52.75731 c 0.47196,-0.558142 0.87871,-0.623697 0.66967,0.292983 L 93.966982,116.54367 c -0.122341,0.35201 -0.363449,0.58525 -0.878945,0.54411 l -29.549323,-0.41855 c -0.661212,-0.009 -0.458961,-0.21061 0,-0.75338 z" fill="#ffffff"/>
+    <path d="m 86.105395,161.11427 c -0.47196,0.55814 -0.87871,0.6237 -0.66967,-0.29298 L 109.08355,97.327911 c 0.12235,-0.35201 0.36345,-0.58525 0.87895,-0.54411 l 29.54932,0.41855 c 0.66121,0.009 0.45896,0.21061 0,0.75338 z" fill="#ffffff"/>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
 [project]
 name = "zeusdb"
-version = "0.0.5"
+version = "0.0.6"
 description = "Ultra-light and blazingly-fast database management system"
 readme = "README.md"
 authors = [
@@ -43,6 +43,16 @@ keywords = [
 dependencies = [
   "zeusdb-vector-database>=0.3.0",
 ]
+
+[project.optional-dependencies]
+docs = [
+  "sphinx",
+  "pydata-sphinx-theme",
+  "myst-parser",
+  "sphinx-autobuild",
+  "sphinx-design",
+]
+
 
 [build-system]
 requires = ["hatchling"]
