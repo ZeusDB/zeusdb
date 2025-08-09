@@ -52,6 +52,7 @@ docs = [
   "sphinx-autobuild",
   "sphinx-design",
   "linkify-it-py",
+  "sphinx-sitemap",
 ]
 
 
