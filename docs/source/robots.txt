@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# ZeusDB Documentation Sitemaps
+Sitemap: https://docs.zeusdb.com/sitemap.xml
+Sitemap: https://docs.zeusdb.com/en/latest/sitemap.xml
+Sitemap: https://docs.zeusdb.com/en/stable/sitemap.xml

@@ -17,11 +17,14 @@ release = '0.0.6'
 extensions = [
     "myst_parser",
     "sphinx_design",
+    "sphinx_sitemap",
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
 
+# -- Sitemap configuration ---------------------------------------------------
+html_baseurl = 'https://docs.zeusdb.com/'
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -29,8 +32,8 @@ exclude_patterns = []
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ['_static']
-
 html_favicon = "_static/favicon.ico"
+html_extra_path = ['robots.txt']
 
 html_theme_options = {
     "navbar_start": ["navbar-logo"],
