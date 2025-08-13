@@ -14,7 +14,7 @@ If a required package is missing, helpful installation instructions are provided
 """
 from typing import Any
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 # Package mapping for extensibility
 _PACKAGE_MAP = {
