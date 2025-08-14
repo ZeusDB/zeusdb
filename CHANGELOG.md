@@ -10,16 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.7] - 2025-
 
 ### Added
-<!-- Add new features here -->
+- New logging guide added to documentation
 
 ### Changed
-<!-- Add changed behavior here -->
-
-### Fixed
-<!-- Add bug fixes here -->
-
-### Removed
-<!-- Add removals/deprecations here -->
+- Updated minimum required version of `zeusdb-vector-database` to v0.4.0
 
 ---
 
