@@ -7,31 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.0.7] - 2025-
+
+### Added
+- New logging guide added to documentation
+
+### Changed
+- Updated minimum required version of `zeusdb-vector-database` to v0.4.0
+
+---
+
 ## [0.0.6] - 2025-08-08
 
 ### Added
 - Comprehensive API documentation with detailed examples and parameter references
-
 - Read the Docs integration with custom domain (docs.zeusdb.com)
-
 - Documentation pages for Create, Add Data, Search, and Persistence operations
-
 - Product Quantization configuration guide with usage examples
-
 - Sphinx-based documentation system with MyST parser and pydata theme
-
 - Interactive code examples with expected outputs for all core operations
-
 - Documentation badge in README linking to hosted docs
-
-### Changed
-<!-- Add changed behavior here -->
-
-### Fixed
-<!-- Add bug fixes here -->
-
-### Removed
-<!-- Add removals/deprecations here -->
 
 ---
 
@@ -72,25 +67,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Introduced modular `__init__.py` using `__getattr__()` for PEP 562-style lazy loading of database backends like `VectorDatabase`. This change improves robustness for partial installations and prepares the master package for a plugin-based or modular architecture.
-
 - Added version constant `__version__ = "0.0.3"`.
-
 - Implemented module-level `__getattr__` to support **lazy loading** of database backends (PEP 562).
-
 - Added `__dir__()` for better introspection and tab-completion in REPLs and IDEs.
-
 - Included clear and actionable error messages when optional submodules are accessed but not installed.
-
 - Added helpful runtime warnings when installed packages are outdated compared to PyPI.
-
 - Added `import_database_class()` to dynamically import database classes based on configuration.
-
 - Added `_utils.py` containing:
   - `get_latest_pypi_version()` for cached PyPI version retrieval.
   - `check_package_version()` for installed package validation and warning if outdated.
   - `should_check_versions()` to suppress version checks in CI, offline, or env-flagged contexts.
   - `ZEUSDB_PACKAGES` registry to manage and extend backend database support.
-
 - Added `test_missing_modules.py` with tests covering:
   - AttributeError messaging for undefined database types.
   - Case sensitivity of attribute access.
@@ -98,11 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Replaced eager `try/except ImportError` block-based loading with centralized, dynamic imports using `import_database_class()` from `_utils.py`.
-
 - Reorganized `__all__` to be static and Pylance-compatible, with type hints provided separately for static analysis.
-
 - Suppressed Pyright warnings using `# pyright: reportUnsupportedDunderAll=false` to support dynamic symbol declarations.
-
 - `VectorDatabase` remains the only active backend; additional backends (`RelationalDatabase`, `GraphDatabase`, `DocumentDatabase`) are included as placeholders in configuration and docstrings for future expansion.
 
 ### Removed
