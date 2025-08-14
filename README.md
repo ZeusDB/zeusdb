@@ -88,6 +88,8 @@ Whether you're powering document search, enabling natural language interfaces, o
 
 💾 Save and reload full indexes, metadata, and quantized vectors across systems
 
+📝 Enterprise-grade logging with flexible formats and output targets
+
 <br/>
 
 ### 🔥 Quick Start Example 
