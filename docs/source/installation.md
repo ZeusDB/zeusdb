@@ -31,4 +31,4 @@ Officially Python 3.10, 3.11, 3.12 and 3.13.
 | Package | Minimum required version |
 |---------|---------------------------|
 | [NumPy](https://numpy.org/) | 2.2.6 |
-| [zeusdb-vector-database](https://github.com/ZeusDB/zeusdb-vector-database) | 0.3.0 |
+| [zeusdb-vector-database](https://github.com/ZeusDB/zeusdb-vector-database) | 0.4.1 |
