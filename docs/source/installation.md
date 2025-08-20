@@ -24,7 +24,7 @@ pip install zeusdb
 ## Python version support
 Officially Python 3.10, 3.11, 3.12 and 3.13.
 
-<br />
+<br /> 
 
 ## Dependencies
 
