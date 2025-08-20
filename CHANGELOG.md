@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.0.8] - 2025-08-20
+
+### Added
+<!-- Add new features here -->
+
+### Changed
+- Updated dependency: `zeusdb-vector-database` from `0.4.0` to `0.4.1` to ensure critical overwrite and memory leak fixes are applied.
+
+### Fixed
+- **Critical:** Fixed duplicate document bug where `overwrite=True` created multiple entries instead of replacing existing ones  
+- Fixed memory leak from accumulated duplicate vectors in HNSW graph during overwrites  
+- Fixed Product Quantization codes and training state not properly cleaned up during document removal  
+- Fixed vector count inconsistencies when removing documents during overwrite operations  
+
+### Removed
+- Legacy overwrite behavior that created duplicates instead of proper replacements
+
+---
+
 ## [0.0.7] - 2025-08-14
 
 ### Added
