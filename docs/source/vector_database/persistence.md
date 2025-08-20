@@ -172,7 +172,7 @@ my_index.zdb/
 Here's a comprehensive example showing the full persistence lifecycle:
 
 ```python
-from zeusdb_vector_database import VectorDatabase
+from zeusdb import VectorDatabase
 import numpy as np
 
 # === PHASE 1: CREATE AND POPULATE INDEX ===
