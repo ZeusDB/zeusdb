@@ -7,10 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.8] - 2025-08-20
+## [0.0.9]
 
 ### Added
-<!-- Add new features here -->
+- Integrations landing page with overview and quick links.
+- LangChain integration guide: install steps, quick start, advanced search (similarity scores, MMR), metadata filtering (with docs link), persistence (hard link to persistence docs), and async examples for scripts & notebooks.
+
+### Changed
+<!-- Add changed behavior here -->
+
+### Fixed
+<!-- Add bug fixes here -->
+
+### Removed
+<!-- Add removals/deprecations here -->
+
+---
+
+## [0.0.8] - 2025-08-20
 
 ### Changed
 - Updated dependency: `zeusdb-vector-database` from `0.4.0` to `0.4.1` to ensure critical overwrite and memory leak fixes are applied.
