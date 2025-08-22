@@ -65,3 +65,4 @@ persistence
 metadata_filtering
 utilities
 logging
+integrations/index
