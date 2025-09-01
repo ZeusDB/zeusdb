@@ -6,6 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import os
+
 project = 'zeusdb'
 copyright = '2025, ZeusDB'
 author = 'ZeusDB'
@@ -24,8 +26,14 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # -- Sitemap configuration ---------------------------------------------------
-html_baseurl = 'https://docs.zeusdb.com/'
-# sitemap_url_scheme = "{lang}/{version}/{link}"
+# html_baseurl = 'https://docs.zeusdb.com/'
+
+html_baseurl = "https://docs.zeusdb.com"
+sitemap_url_scheme = "{lang}/{version}{link}"
+
+rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")  # Default to "latest"
+if rtd_version:
+    html_baseurl = f"https://docs.zeusdb.com/en/{rtd_version}/"
 
 
 # -- Options for HTML output -------------------------------------------------
