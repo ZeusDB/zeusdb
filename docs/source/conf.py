@@ -28,12 +28,6 @@ exclude_patterns = []
 # -- Sitemap configuration ---------------------------------------------------
 # html_baseurl = 'https://docs.zeusdb.com/'
 
-# html_baseurl = "https://docs.zeusdb.com"
-
-# rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")  # Default to "latest"
-# if rtd_version:
-#     html_baseurl = f"https://docs.zeusdb.com/en/{rtd_version}/"
-
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")
 html_baseurl = f"https://docs.zeusdb.com/en/{rtd_version}/"
 sitemap_url_scheme = "{link}"
