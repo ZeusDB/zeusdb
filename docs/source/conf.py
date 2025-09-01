@@ -29,7 +29,6 @@ exclude_patterns = []
 # html_baseurl = 'https://docs.zeusdb.com/'
 
 html_baseurl = "https://docs.zeusdb.com"
-sitemap_url_scheme = "{lang}/{version}{link}"
 
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "latest")  # Default to "latest"
 if rtd_version:
