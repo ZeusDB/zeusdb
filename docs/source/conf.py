@@ -24,7 +24,7 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # -- Sitemap configuration ---------------------------------------------------
-html_baseurl = 'https://docs.zeusdb.com/'
+html_baseurl = 'https://docs.zeusdb.com'
 sitemap_url_scheme = "{lang}/{version}/{link}"
 
 
