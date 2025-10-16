@@ -25,3 +25,4 @@ Open a request on GitHub Issues or submit a PR to add an integration guide.
 :hidden:
 
 langchain
+llamaindex
