@@ -10,8 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.9]
 
 ### Added
+
 - Integrations landing page with overview and quick links.
 - LangChain integration guide: install steps, quick start, advanced search (similarity scores, MMR), metadata filtering (with docs link), persistence (hard link to persistence docs), and async examples for scripts & notebooks.
+- LlamaIndex Integration Guide: Comprehensive documentation (`llamaindex.md`) with 9 tested, copy-paste ready examples
 
 ### Changed
 <!-- Add changed behavior here -->
