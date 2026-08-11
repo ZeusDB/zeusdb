@@ -77,6 +77,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/build/
 
 # PyBuilder
 .pybuilder/
@@ -189,3 +190,6 @@ cython_debug/
 
 # Ignore Cargo.lock for Rust library
 **/Cargo.lock
+
+# Agents
+CLAUDE.local.md
