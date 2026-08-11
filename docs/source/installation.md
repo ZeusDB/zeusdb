@@ -6,29 +6,33 @@ orphan: true
 
 # Installation
 
-You can install ZeusDB Vector Database with 'uv' or alternatively using 'pip'.
+You can install ZeusDB with 'uv' or alternatively using 'pip'.
 
 
 Recommended (with uv):
-```python
+```bash
 uv pip install zeusdb
 ```
 
 Alternatively (just with pip):
-```{code-block} python
+```bash
 pip install zeusdb
 ```
 
 <br />
 
 ## Python version support
-Officially Python 3.10, 3.11, 3.12 and 3.13.
+Officially Python 3.10, 3.11, 3.12, 3.13 and 3.14.
 
 <br /> 
 
 ## Dependencies
 
-| Package | Minimum required version |
+Installing `zeusdb` brings in the vector database and its dependencies automatically.
+
+| Package | Version installed |
 |---------|---------------------------|
-| [NumPy](https://numpy.org/) | 2.2.6 |
-| [zeusdb-vector-database](https://github.com/ZeusDB/zeusdb-vector-database) | 0.4.1 |
+| [zeusdb-vector-database](https://github.com/ZeusDB/zeusdb-vector-database) | 0.5.x (`>=0.5.0,<0.6.0`) |
+| [NumPy](https://numpy.org/) | `>=2.2.6,<3.0.0` (required by the vector database) |
+
+Prebuilt wheels are published for Linux x86_64 and aarch64 (glibc and musl), macOS Apple Silicon, and Windows x86_64.

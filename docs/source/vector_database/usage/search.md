@@ -4,31 +4,35 @@ Perform similarity search to find the most similar vectors in your index.
 
 **HNSWIndex.<span style="color: #663399;">search</span>**(<br/>
 &emsp;&emsp;**vector: list[float] | list[list[float]] | np.ndarray**,<br/>
-&emsp;&emsp;**filter: dict[str, str] | None = None**,<br/>
+&emsp;&emsp;**filter: dict[str, Any] | None = None**,<br/>
 &emsp;&emsp;**top_k: int = 10**,<br/>
 &emsp;&emsp;**ef_search: int | None = None**,<br/>
-&emsp;&emsp;**return_vector: bool = False**<br/>
+&emsp;&emsp;**return_vector: bool = False**,<br/>
+&emsp;&emsp;**rerank: int | None = None**<br/>
 )
 
-Query the index using a new vector and retrieve the top-k nearest neighbors. Supports both single vector queries and batch searches with multiple vectors. You can also filter by metadata or return the original stored vectors.
+Query the index using a new vector and retrieve the top-k nearest neighbors. Supports both single vector queries and batch searches with multiple vectors. You can also filter by metadata or return the stored vectors.
 
 ```{admonition} Parameters
 :class: note
 
 vector : *list[float], list[list[float]], or np.ndarray, required*
-:   The query vector (single: `list[float]`) or batch of query vectors (`list[list[float]]` or 2D `np.ndarray`) to compare against the index. Must match the index dimension.
+:   The query vector (single: `list[float]` or 1D `np.ndarray`) or batch of query vectors (`list[list[float]]` or 2D `np.ndarray`) to compare against the index. Must match the index dimension and contain only finite values. A query vector containing `NaN` or an infinity raises `ValueError`.
 
-filter : *dict[str, str] or None, default None*
-:   Optional metadata filter. Only vectors with matching key-value metadata pairs will be considered in the search.
+filter : *dict[str, Any] or None, default None*
+:   Optional metadata filter. A field maps either to a plain value, meaning equality, or to a dict of operators. See [Metadata Filtering](../metadata_filtering.md) for the operators and their behaviour.
 
 top_k : *int, default 10*
 :   Number of nearest neighbors to return for each query vector.
 
 ef_search : *int or None, default None*
-:   Search complexity parameter. Higher values improve accuracy at the cost of speed. Defaults to `max(2 × top_k, 100)` when not specified.
+:   Search complexity parameter. Higher values improve accuracy at the cost of speed. The default depends on the distance metric: `max(2 × top_k, 100)` for `cosine` and `max(2 × top_k, 150)` for `l1` and `l2`. It has no effect on a reranked quantized search, where the traversal is widened to the rerank fetch instead; see [Product Quantization](../product_quantization.md).
 
 return_vector : *bool, default False*
-:   If `True`, the result objects will include the original embedding vector. Useful for downstream processing like re-ranking or hybrid search.
+:   If `True`, the result objects will include the stored embedding vector. Under `cosine` this is the normalized form, not the values you supplied. Useful for downstream processing like re-ranking or hybrid search.
+
+rerank : *int or None, default None*
+:   Candidates fetched per requested result before rescoring against raw vectors. Only applies to a quantized index whose `storage_mode` is `quantized_with_raw`; an unquantized or `quantized_only` index ignores it. Omitted, the fetch is calibrated from the index's own data. `rerank=0` turns reranking off and returns ADC scores. See [Product Quantization](../product_quantization.md).
 ```
 
 
@@ -41,15 +45,36 @@ Single Query
 :   Returns `list[dict]` where each dict contains:
     
     * `id` - The vector ID
-    * `score` - Similarity score (lower = more similar)
+    * `score` - Distance (lower = more similar)
     * `metadata` - Associated metadata dictionary
-    * `vector` - Original embedding vector (only if `return_vector=True`)
+    * `vector` - Stored embedding vector (only if `return_vector=True`)
 
 Batch Query
-:   Returns `list[list[dict]]` - a list of result lists, one for each input query vector.
+:   Returns `list[list[dict]]` - a list of result lists, one for each input query vector, in the order the queries were given.
 ```
 
+**The filter is applied after the graph search, not during it.** The index finds the `top_k` nearest vectors first and then discards the ones the filter rejects, so a selective filter can return fewer than `top_k` results, or none at all. Raise `top_k` when you filter.
+
+**On a reranked quantized search the score is the raw-vector distance.** With `rerank=0` it is the ADC estimate. The two are not comparable, so a threshold tuned against one does not carry to the other.
+
 ## Examples
+
+The examples below all run against this index:
+
+```python
+from zeusdb import VectorDatabase
+
+vdb = VectorDatabase()
+index = vdb.create(index_type="hnsw", dim=8)
+index.add([
+    {"id": "doc_001", "values": [0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.6, 0.7], "metadata": {"author": "Alice"}},
+    {"id": "doc_002", "values": [0.9, 0.1, 0.4, 0.2, 0.8, 0.5, 0.3, 0.9], "metadata": {"author": "Bob"}},
+    {"id": "doc_003", "values": [0.11, 0.21, 0.31, 0.15, 0.41, 0.22, 0.61, 0.72], "metadata": {"author": "Alice"}},
+    {"id": "doc_004", "values": [0.85, 0.15, 0.42, 0.27, 0.83, 0.52, 0.33, 0.95], "metadata": {"author": "Bob"}},
+    {"id": "doc_005", "values": [0.12, 0.22, 0.33, 0.13, 0.45, 0.23, 0.65, 0.71], "metadata": {"author": "Alice"}},
+])
+query_vector = [0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.6, 0.7]
+```
 
 <br />
 
@@ -57,55 +82,51 @@ Batch Query
 
 ```python
 results = index.search(vector=query_vector, top_k=2)
-print(results)
+for res in results:
+    print(res["id"], round(res["score"], 6), res["metadata"])
 ```
 
 *Output*
-```
-[
-  {'id': 'doc_37', 'score': 0.016932480037212372, 'metadata': {'index': '37', 'split': 'test'}}, 
-  {'id': 'doc_33', 'score': 0.019877362996339798, 'metadata': {'split': 'test', 'index': '33'}}
-]
+```text
+doc_001 0.0 {'author': 'Alice'}
+doc_003 0.000988 {'author': 'Alice'}
 ```
 
 <br />
 
 **🔍 Search Example 2 - Query with metadata filter**
 
-This filters on the given metadata after conducting the similarity search.
+The filter is applied to the `top_k` nearest results after the similarity search.
 
 ```python
-query_vector = [0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.6, 0.7]
 results = index.search(vector=query_vector, filter={"author": "Alice"}, top_k=5)
-print(results)
+for res in results:
+    print(res["id"], round(res["score"], 6), res["metadata"])
 ```
 
 *Output*
-```
-[
-  {'id': 'doc_001', 'score': 0.0, 'metadata': {'author': 'Alice'}}, 
-  {'id': 'doc_003', 'score': 0.0009883458260446787, 'metadata': {'author': 'Alice'}}, 
-  {'id': 'doc_005', 'score': 0.0011433829786255956, 'metadata': {'author': 'Alice'}}
-]
+```text
+doc_001 0.0 {'author': 'Alice'}
+doc_003 0.000988 {'author': 'Alice'}
+doc_005 0.001143 {'author': 'Alice'}
 ```
 
 <br />
 
 **🔍 Search Example 3 - Search results include vectors**
 
-You can optionally return the stored embedding vectors alongside metadata and similarity scores by setting `return_vector=True`. This is useful when you need access to the raw vectors for downstream tasks such as re-ranking, inspection, or hybrid scoring.
+You can optionally return the stored embedding vectors alongside metadata and similarity scores by setting `return_vector=True`. Under `cosine` the stored vector is normalized to unit length, which is why the values below differ from the ones supplied.
 
 ```python
-results = index.search(vector=query_vector, filter={"split": "test"}, top_k=2, return_vector=True)
-print(results)
+results = index.search(vector=query_vector, top_k=1, return_vector=True)
+print(results[0]["id"], round(results[0]["score"], 6))
+print([round(v, 4) for v in results[0]["vector"]])
 ```
 
 *Output*
-```
-[
-  {'id': 'doc_37', 'score': 0.016932480037212372, 'metadata': {'index': '37', 'split': 'test'}, 'vector': [0.36544516682624817, 0.11984539777040482, 0.7143614292144775, 0.8995016813278198]}, 
-  {'id': 'doc_33', 'score': 0.019877362996339798, 'metadata': {'split': 'test', 'index': '33'}, 'vector': [0.8367619514465332, 0.6394991874694824, 0.9291712641716003, 0.9777664542198181]}
-]
+```text
+doc_001 0.0
+[0.0913, 0.1826, 0.2739, 0.0913, 0.3651, 0.1826, 0.5477, 0.639]
 ```
 
 <br />
@@ -115,21 +136,19 @@ print(results)
 Perform a similarity search on multiple query vectors simultaneously, returning results for each query.
 
 ```python
-query_vector =
-[
-    [0.1, 0.2, 0.3],
-    [0.4, 0.5, 0.6]
+batch = [
+    [0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.6, 0.7],
+    [0.9, 0.1, 0.4, 0.2, 0.8, 0.5, 0.3, 0.9],
 ]
-results = index.search(vector=query_vector, top_k=3)
-print(results)
+results = index.search(vector=batch, top_k=2)
+for q, hits in enumerate(results):
+    print(f"query {q}:", [(h["id"], round(h["score"], 6)) for h in hits])
 ```
 
 *Output*
-```
-[
-[{'id': 'a', 'score': 4.999447078546382e-09, 'metadata': {'category': 'A'}}, {'id': 'b', 'score': 0.02536815218627453, 'metadata': {'category': 'B'}}, {'id': 'c', 'score': 0.04058804363012314, 'metadata': {'category': 'A'}}],
-[{'id': 'b', 'score': 4.591760305316939e-09, 'metadata': {'category': 'B'}}, {'id': 'c', 'score': 0.0018091063247993588, 'metadata': {'category': 'A'}}, {'id': 'a', 'score': 0.025368161499500275, 'metadata': {'category': 'A'}}]
-]
+```text
+query 0: [('doc_001', 0.0), ('doc_003', 0.000988)]
+query 1: [('doc_002', 0.0), ('doc_004', 0.002238)]
 ```
 
 <br />
@@ -139,27 +158,35 @@ print(results)
 Perform a similarity search on multiple query vectors from a NumPy array, returning results for each query.
 
 ```python
-query_vector = np.array(
-[
-    [0.1, 0.2, 0.3],
-    [0.7, 0.8, 0.9]
-], dtype=np.float32)
+import numpy as np
 
-results = index.search(vector=query_vector, top_k=3)
-print(results)
+query_batch = np.array(batch, dtype=np.float32)
+
+results = index.search(vector=query_batch, top_k=2)
+for q, hits in enumerate(results):
+    print(f"query {q}:", [h["id"] for h in hits])
+```
+
+*Output*
+```text
+query 0: ['doc_001', 'doc_003']
+query 1: ['doc_002', 'doc_004']
 ```
 
 <br />
 
 **🔍 Search Example 6 - Batch Search with metadata filter**
 
-Performs similarity search on multiple query vectors with metadata filtering, returning filtered results for each query.
+The same filter is applied to every query in the batch. The second query below returns nothing, because both of its two nearest neighbours are Bob's.
 
 ```python
-results = index.search(
-    [[0.1, 0.2, 0.3], [0.7, 0.8, 0.9]],
-    filter={"category": "A"},
-    top_k=3
-)
-print(results)
+results = index.search(batch, filter={"author": "Alice"}, top_k=2)
+for q, hits in enumerate(results):
+    print(f"query {q}:", [h["id"] for h in hits])
+```
+
+*Output*
+```text
+query 0: ['doc_001', 'doc_003']
+query 1: []
 ```

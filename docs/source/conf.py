@@ -11,7 +11,7 @@ import os
 project = 'zeusdb'
 copyright = '2025, ZeusDB'
 author = 'ZeusDB'
-release = '0.0.8'
+release = '0.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

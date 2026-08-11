@@ -8,6 +8,7 @@ The logging system is designed to be invisible when you don’t need it and powe
 
 For most users, logging works automatically out of the box. No need to do anything.
 
+<!-- zeusdb:skip -->
 ```python
 from zeusdb import VectorDatabase
 # Logging is automatically configured - no setup required!
@@ -16,100 +17,56 @@ vdb = VectorDatabase()
 index = vdb.create("hnsw", dim=1536)
 
 # Operations are automatically logged with structured data
-result = index.add({"vectors": vectors, "ids": ids})
+result = index.add({"ids": ids, "embeddings": vectors})
 results = index.search(query_vector, top_k=5)
 ```
 
 **What you get automatically:**
-- ✅ **Silent by default** - Only errors and warnings in production
-- ✅ **Environment detection** - Appropriate defaults for dev/prod/testing
+- ✅ **Quiet by default** - Only errors and warnings outside development
+- ✅ **Environment detection** - Appropriate defaults for dev/prod/testing/CI/notebooks
 - ✅ **Structured JSON logs** in production environments  
 - ✅ **Human-readable logs** in development environments
-- ✅ **Performance timing** on all operations
+- ✅ **Operation timing** on index creation, additions, searches and saves
 - ✅ **Cross-platform compatibility** 
+
+Note that `save()` and `load()` print progress directly to stdout. That output is not part of the logging system and is not affected by any of the settings below.
 
 
 ### Smart Environment Detection
 
-This amazing feature automatically detects where your code is running and applies appropriate logging defaults!
+The system automatically detects where your code is running and applies appropriate logging defaults.
 
 - **🏭 Production** (`ENVIRONMENT=production`): ERROR level, JSON format, often file output
-- **💻 Development** (`ENVIRONMENT=development`): WARNING level, human format, console output  
+- **💻 Development** (default): WARNING level, human format, console output  
 - **🧪 Testing** (`pytest`, `PYTEST_CURRENT_TEST`): CRITICAL level, minimal output
 - **📓 Jupyter** (`JUPYTER_SERVER_ROOT`): INFO level, human format, clean output
 - **🔄 CI/CD** (`CI`, `GITHUB_ACTIONS`): WARNING level, human format for readability
 
 #### How Environment Detection Works
 
-The system automatically checks for these indicators:
+The system checks for these indicators, with an explicit `ENVIRONMENT` value winning over auto-detection:
 
 | Environment | Detection Method | What It Finds |
 |-------------|------------------|---------------|
+| **Explicit** | `ENVIRONMENT=production` / `development` / `testing` | User explicitly set (short forms `prod`, `dev`, `test` also accepted) |
 | **Testing** | `PYTEST_CURRENT_TEST` | pytest automatically sets this |
 | **Testing** | `'pytest' in sys.modules` | pytest imported |
 | **Jupyter** | `JUPYTER_SERVER_ROOT` | Jupyter server running |
 | **Jupyter** | `JPY_PARENT_PID` | Jupyter kernel process |
 | **Jupyter** | `'IPython' in sys.modules` | IPython/Jupyter imported |
-| **CI/CD** | `CI=true` | Most CI systems set this |
-| **CI/CD** | `GITHUB_ACTIONS=true` | GitHub Actions |
-| **CI/CD** | `GITLAB_CI=true` | GitLab CI |
+| **CI/CD** | `CI` | Most CI systems set this |
+| **CI/CD** | `GITHUB_ACTIONS` | GitHub Actions |
+| **CI/CD** | `GITLAB_CI` | GitLab CI |
 | **Production** | `KUBERNETES_SERVICE_HOST` | Running in Kubernetes |
 | **Production** | `DOCKER_CONTAINER` | Running in Docker |
-| **Explicit** | `ENVIRONMENT=production` | User explicitly set |
 
-#### Real-World Examples
-
-**🧪 In pytest:**
-```bash
-$ pytest test_my_app.py
-# Environment detected: 'testing'
-# Applied: CRITICAL level, no console output, minimal format
-# Result: Your tests run clean without log spam!
-```
-
-**📓 In Jupyter:**
-```python
-# Cell 1
-import zeusdb
-# Environment detected: 'jupyter' (via JUPYTER_SERVER_ROOT)
-# Applied: INFO level, human format, clean timestamps
-# Result: Nice readable logs for exploration!
-
-# Cell 2  
-vdb = zeusdb.VectorDatabase()
-# Logs: "Index created: dim=1536, vectors=0" (clean, readable)
-```
-
-**🏭 In Docker production:**
-```bash
-$ docker run my-app
-# Environment detected: 'production' (via KUBERNETES_SERVICE_HOST)
-# Applied: ERROR level, JSON format, structured output
-# Result: Production-ready structured logs!
-```
-
-**💻 On your laptop:**
-```bash
-$ python my_script.py
-# Environment detected: 'development' (default)
-# Applied: WARNING level, human format, console output
-# Result: Clean development experience!
-```
-
-#### Test Environment Detection Yourself
-
-```python
-# See what environment is detected
-import zeusdb.logging_config as lc
-env = lc._detect_environment()
-print(f"Detected environment: {env}")
-
-config = lc._get_smart_defaults(env)
-print(f"Applied config: {config}")
-```
+Environment variables always override the detected defaults.
 
 #### Override Environment Detection
 
+Set `ENVIRONMENT` before ZeusDB is first imported, since the defaults are applied at import time:
+
+<!-- zeusdb:skip -->
 ```python
 import os
 
@@ -143,29 +100,22 @@ export ZEUSDB_LOG_FILE=/var/log/zeusdb/app.log
 python your_app.py
 ```
 
-**Machine Learning Pipeline Debugging**
-```bash
-# For ML workflows where you want detailed progress tracking
-export ZEUSDB_LOG_LEVEL=info
-export ZEUSDB_LOG_FORMAT=human
-export ZEUSDB_LOG_CONSOLE=true
-python train_embeddings.py
-
-# Example output you'll see:
-# 2025-01-15 14:30:15 - INFO - Starting PQ training: 5000 vectors
-# 2025-01-15 14:30:19 - INFO - PQ training completed: 4.2s (compression: 192x)
-# 2025-01-15 14:30:20 - INFO - Vector addition completed: 10000 vectors in 2.1s
-```
-
 ### Environment Variables Reference
 
 | Variable | Options | Default | Description |
 |----------|---------|---------|-------------|
-| `ZEUSDB_LOG_LEVEL` | `trace`, `debug`, `info`, `warning`, `error`, `critical` | `warning` (dev), `error` (prod) | Controls log verbosity |
+| `ZEUSDB_LOG_LEVEL` | `trace`, `debug`, `info`, `error` | `warning` (dev), `error` (prod) | Controls log verbosity |
 | `ZEUSDB_LOG_FORMAT` | `human`, `json` | `human` (dev), `json` (prod) | Output format |
 | `ZEUSDB_LOG_TARGET` | `stdout`, `stderr`, `file` | `stderr` | Where logs go |
-| `ZEUSDB_LOG_FILE` | `/path/to/file.log` | `zeusdb.log` | Log file path (if target=file) |
+| `ZEUSDB_LOG_FILE` | `/path/to/file.log` | `zeusdb.log` | Log file path, written exactly as given (if target=file) |
+| `ZEUSDB_LOG_ROTATION` | `daily`, `never` | `never` | With `daily`, a UTC date is appended to the file name |
 | `ZEUSDB_LOG_CONSOLE` | `true`, `false` | Auto-detected | Force console output |
+| `ZEUSDB_DISABLE_AUTO_LOGGING` | `true`, `1`, `yes` | unset | Skip automatic configuration entirely |
+| `RUST_LOG` | standard `env_logger` syntax | unset | Overrides `ZEUSDB_LOG_LEVEL` for the Rust layer |
+
+**⚠️ `warning` and `critical` are not accepted level names.** The Python layer accepts them, but the Rust layer rejects them and prints `ignoring 'zeusdb_vector_database=warning': invalid filter directive`. The bare `warn` is the opposite, accepted by Rust and rejected by Python. Use `trace`, `debug`, `info` or `error`, which both layers accept.
+
+**Log rotation.** `ZEUSDB_LOG_FILE` writes exactly the path given. Under `ZEUSDB_LOG_ROTATION=daily` with `ZEUSDB_LOG_FILE=logs/app.log`, two files appear: `logs/app.log` and a dated `logs/app.log.2026-08-05`. Rotation applies to the Rust layer, which writes the dated one.
 
 <br />
 
@@ -174,6 +124,7 @@ python train_embeddings.py
 For enterprise environments with existing logging infrastructure.
 
 ### Option 1: Disable Auto-Configuration
+<!-- zeusdb:skip -->
 ```python
 import os
 os.environ["ZEUSDB_DISABLE_AUTO_LOGGING"] = "1"
@@ -182,31 +133,36 @@ os.environ["ZEUSDB_DISABLE_AUTO_LOGGING"] = "1"
 import logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
-from zeusdb_vector_database import VectorDatabase  # Will respect your existing logging setup
+from zeusdb import VectorDatabase  # Will respect your existing logging setup
 ```
 
 ### Option 2: Programmatic Initialization
+<!-- zeusdb:skip -->
 ```python
 import os
 os.environ["ZEUSDB_DISABLE_AUTO_LOGGING"] = "1"
 
 import zeusdb
 
-# Initialize with JSON to console 
+# JSON to stdout
 success = zeusdb.init_logging(level="info")
 
-# OR initialize with file logging
-success = zeusdb.init_file_logging(
-    log_dir="/var/log/myapp",
-    level="debug", 
-    file_prefix="zeusdb"
-)
+# OR JSON to a directory of daily rotating files. Pick one, not both.
+# success = zeusdb.init_file_logging(
+#     log_dir="/var/log/myapp",
+#     level="debug", 
+#     file_prefix="zeusdb"
+# )
 
-# Then use normally
+print("initialized:", success)
+
 vdb = zeusdb.VectorDatabase()
 ```
 
+**Only the first initializer to run takes effect.** Both functions return `True` if they installed the logging subscriber and `False` if one was already installed, so calling both leaves the second with no effect and a `False` return. `zeusdb.is_logging_initialized()` reports whether either has run.
+
 ### Option 3: Custom Logger Integration
+<!-- zeusdb:skip -->
 ```python
 import logging
 import os
@@ -229,38 +185,35 @@ from zeusdb import VectorDatabase
 ### 📊 Log Output Examples
 
 #### Human-Readable (Development)
-```
-2025-01-15 10:30:15 - zeusdb.vector - INFO - Index created: dim=1536, vectors=0
-2025-01-15 10:30:16 - zeusdb.vector - INFO - Added 1000 vectors in 45ms
-2025-01-15 10:30:16 - zeusdb.vector - DEBUG - Search completed: 5 results in 2ms
+```text
+2026-08-05T12:19:39.261318Z  INFO build: HNSW index created successfully operation="index_creation_complete" dim=8 space=cosine m=16 ef_construction=200 expected_size=10000 has_quantization=false duration_ms=0
+2026-08-05T12:19:39.3491294Z  INFO add: Vector addition completed operation="add_vectors_complete" total_inserted=2 total_errors=0 success_rate=100.0 duration_ms=87 overwrite_mode=true final_storage_mode="raw_only"
 ```
 
 #### Structured JSON (Production)
 ```json
-{"timestamp":"2025-01-15T10:30:15.123Z","level":"INFO","operation":"index_creation","dim":1536,"space":"cosine","duration_ms":12}
-{"timestamp":"2025-01-15T10:30:16.456Z","level":"INFO","operation":"vector_addition","total_inserted":1000,"duration_ms":45}
-{"timestamp":"2025-01-15T10:30:16.789Z","level":"DEBUG","operation":"search_complete","results_count":5,"duration_ms":2}
+{"timestamp":"2026-08-05T12:19:39.4853862Z","level":"INFO","fields":{"message":"HNSW index created successfully","operation":"index_creation_complete","dim":8,"space":"cosine","m":16,"ef_construction":200,"expected_size":10000,"has_quantization":false,"duration_ms":"0"},"target":"zeusdb_vector_database::hnsw_index","filename":"src\\hnsw_index.rs","line_number":1068,"threadId":"ThreadId(1)"}
 ```
 
 ### 🔍 Monitoring and Observability
 
-#### Key Metrics to Monitor
-- **`operation`**: Type of operation (index_creation, vector_addition, search, etc.)
-- **`duration_ms`**: Performance timing for all operations
-- **`total_inserted`**, **`total_errors`**: Success/failure rates
-- **`compression_ratio`**: Memory efficiency with quantization
-- **`training_progress`**: Quantization training status
+#### Key Fields to Monitor
+- **`operation`**: the operation name, for example `index_creation_complete`, `add_vectors_complete`, `search_complete`, `pq_training_complete`, `save_complete`, `compact_complete`
+- **`duration_ms`**: timing on index creation, additions, searches, saves and compaction
+- **`total_inserted`**, **`total_errors`**, **`success_rate`**: outcome of each `add()`
+- **`final_storage_mode`**: whether an index is serving raw or quantized results
+- **`results_count`**: results returned by a search
 
 #### Production Alerting Examples
 ```bash
 # Monitor error rates
 grep '"level":"ERROR"' /var/log/zeusdb/app.log | wc -l
 
-# Track performance degradation  
-grep '"operation":"search"' /var/log/zeusdb/app.log | jq '.duration_ms' | avg
+# Track search latency
+grep '"operation":"search_complete"' /var/log/zeusdb/app.log | jq '.fields.duration_ms'
 
 # Watch quantization training
-grep '"operation":"pq_training"' /var/log/zeusdb/app.log | tail -f
+grep '"operation":"pq_training' /var/log/zeusdb/app.log
 ```
 
 ### 🛠️ Troubleshooting
@@ -272,8 +225,8 @@ grep '"operation":"pq_training"' /var/log/zeusdb/app.log | tail -f
 # Check if auto-logging is disabled
 echo $ZEUSDB_DISABLE_AUTO_LOGGING
 
-# Verify log level
-ZEUSDB_LOG_LEVEL=debug python -c "import zeusdb; print('Logging active')"
+# Verify the level is one both layers accept
+ZEUSDB_LOG_LEVEL=debug python -c "import zeusdb; print(zeusdb.is_logging_initialized())"
 ```
 
 **File logging not working?**
@@ -291,10 +244,9 @@ ZEUSDB_LOG_TARGET=stderr ZEUSDB_LOG_LEVEL=info python your_app.py
 ZEUSDB_LOG_LEVEL=trace python your_app.py
 ```
 
-#### Performance Impact
-- **Minimal overhead**: Structured logging adds <1% performance impact
-- **Async file writing**: File logging doesn't block operations
-- **Smart buffering**: Logs are efficiently batched for performance
+#### Performance Notes
+- File logging is non-blocking: records are handed to a background writer rather than written on the calling thread.
+- `trace` and `debug` are verbose enough to dominate runtime on a hot loop. Leave production at `error`.
 
 ### Best Practices
 
@@ -310,6 +262,7 @@ export ZEUSDB_LOG_LEVEL=info
 export ZEUSDB_LOG_FORMAT=json
 export ZEUSDB_LOG_TARGET=file
 export ZEUSDB_LOG_FILE=logs/zeusdb-staging.log
+export ZEUSDB_LOG_ROTATION=daily
 ```
 
 #### Production
@@ -319,6 +272,7 @@ export ZEUSDB_LOG_LEVEL=error
 export ZEUSDB_LOG_FORMAT=json
 export ZEUSDB_LOG_TARGET=file
 export ZEUSDB_LOG_FILE=/var/log/zeusdb/production.log
+export ZEUSDB_LOG_ROTATION=daily
 ```
 
 Logging stays out of the way when you don’t need it, but delivers full power and flexibility when you do. Most users never need to touch the settings, while enterprise teams can fine-tune every aspect of observability.
