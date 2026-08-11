@@ -1,0 +1,57 @@
+# Runs the test suite on every push and pull request on main and development.
+#
+# This package is pure Python and re-exports a surface it does not own, so the
+# tests are import checks and the gate is cheap. Linux only, one job per
+# supported interpreter, which is every version in the classifiers.
+#
+# Installation uses `uv pip install` rather than `uv sync --locked`, which is
+# deliberate. Replaying uv.lock would pin zeusdb-vector-database and the run
+# would never see a newer release inside the declared range. Resolving the
+# constraint fresh is what makes tests/test_dependency_constraint.py meaningful:
+# it fails when a release inside the range stops providing a re-exported name.
+#
+# The project is installed rather than placed on the path, because
+# tests/test_dependency_constraint.py reads the declared requirement from
+# installed distribution metadata.
+name: CI
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+
+      - name: Install the project and its test dependencies
+        run: uv pip install --system ".[dev]"
+
+      - name: Report what the constraint resolved to
+        run: uv pip list --system | grep zeusdb
+
+      - name: Run the test suite
+        run: python -m pytest

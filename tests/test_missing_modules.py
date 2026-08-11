@@ -17,14 +17,20 @@ def test_missing_attribute():
 
 
 def test_missing_attribute_message_format():
-    """Test the specific format of the error message."""
+    """Test the specific format of the error message.
+
+    Asserts the opening rather than the whole string. The message also lists
+    the available attributes, and pinning that list here made this test fail
+    the moment the list changed.
+    """
     import zeusdb
-    
+
     with pytest.raises(AttributeError) as exc_info:
         zeusdb.SomeRandomDatabase
-    
-    expected_msg = "module 'zeusdb' has no attribute 'SomeRandomDatabase'"
-    assert str(exc_info.value) == expected_msg
+
+    expected_prefix = "module 'zeusdb' has no attribute 'SomeRandomDatabase'"
+    assert str(exc_info.value).startswith(expected_prefix)
+    assert "Available attributes:" in str(exc_info.value)
 
 
 def test_case_sensitive_attribute_access():

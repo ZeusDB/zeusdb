@@ -7,22 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.0.9]
+## [0.1.0] - 2026-08-11
 
 ### Added
 
+- `HNSWIndex`, `AddResult`, `init_logging`, `init_file_logging` and `is_logging_initialized` are now importable from `zeusdb`. The package re-exports the whole public surface of `zeusdb-vector-database` apart from its `__version__`.
+- `zeusdb.logging_config` submodule, providing `get_logger` and `operation_context`. `get_logger` returns a `LoggerAdapter` that accepts arbitrary keyword fields and wraps the logger `zeusdb-vector-database` configures.
+- Test suite covering the exported surface, the import forms used by `langchain-zeusdb` and `llama-index-vector-stores-zeusdb`, and the declared dependency constraint against what it resolves to. 40 tests.
+- `ci.yml`, running the test suite on Python 3.10 through 3.14 on push and pull request against `main` and `development`.
+- Tag-triggered publishing, TestPyPI routing for prerelease tags, and a `workflow_dispatch` dry run path in `publish-pypi.yml`.
+- Version consistency gate and a built-wheel import check in the publish workflow.
+- `dev` optional dependency group.
+- `Programming Language :: Python :: 3.14` classifier.
 - Integrations landing page with overview and quick links.
 - LangChain integration guide: install steps, quick start, advanced search (similarity scores, MMR), metadata filtering (with docs link), persistence (hard link to persistence docs), and async examples for scripts & notebooks.
 - LlamaIndex Integration Guide: Comprehensive documentation (`llamaindex.md`) with 9 tested, copy-paste ready examples
 
 ### Changed
-<!-- Add changed behavior here -->
+
+- `zeusdb-vector-database` constraint from `>=0.4.1` to `>=0.5.0,<0.6.0`.
+- `__all__` is an explicit literal list rather than one computed from the package registry.
+- The `AttributeError` raised for an unknown attribute lists every available attribute, including `__version__`.
+- Licence declaration from the `{file = 'LICENSE'}` table form to the SPDX expression `Apache-2.0`, with `license-files` naming `LICENSE` and `NOTICE`.
+- `__getattr__` caches a resolved name on the module, so each name is imported once.
+- `__dir__` returns its names sorted.
+- Regenerated `uv.lock`, which recorded `zeusdb-vector-database>=0.3.0` and pinned 0.3.0.
 
 ### Fixed
-<!-- Add bug fixes here -->
+
+- `import zeusdb.logging_config` resolves. `langchain-zeusdb` and `llama-index-vector-stores-zeusdb` both import `get_logger` and `operation_context` from it, and both were silently falling back to a private copy.
+- `test_missing_attribute_message_format` asserted an error string the package stopped producing when the message gained its list of available attributes.
 
 ### Removed
-<!-- Add removals/deprecations here -->
+
+- `License :: OSI Approved :: Apache Software License` classifier, superseded by the SPDX licence expression.
+- `publish-check.yml`. Its build and metadata check are the `build` job of `publish-pypi.yml`, reached by a `workflow_dispatch` run with the publish input left unticked.
 
 ---
 

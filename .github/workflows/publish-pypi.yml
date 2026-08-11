@@ -1,31 +1,85 @@
-# This workflow publishes the zeusdb package to PyPI.
-# This workflow runs manually (via workflow_dispatch).
-# Enables trusted publishing to PyPi
-name: Publish Package to PyPI
+# Builds an sdist and a universal wheel with hatchling, then publishes them
+# through GitHub trusted publishing (no API tokens required).
+#
+# This package is pure Python, so there is one sdist and one py3-none-any
+# wheel. No build matrix, no platform targets.
+#
+# Triggers:
+#   - push of a tag matching v*, which builds and publishes
+#   - workflow_dispatch, which builds and checks everything, and only publishes
+#     when the publish input is ticked
+#
+# The dry run is a workflow_dispatch with the publish box left unticked. It
+# builds, gates the version, validates the metadata and imports the built
+# wheel, then stops without uploading anything.
+#
+# Tag routing:
+#   - a tag containing a, b or rc carries a PEP 440 prerelease segment and
+#     publishes to TestPyPI
+#   - any other v* tag publishes to production PyPI
+#   Tags must be the letter v followed by a PEP 440 version. A tag holding the
+#   letters a, b or rc anywhere routes to TestPyPI, so a stable tag must not
+#   contain them.
+#
+# A workflow_dispatch run can only ever reach TestPyPI. Production publishing
+# requires a stable tag.
+#
+# This filename is registered in the PyPI and TestPyPI Trusted Publisher
+# records. Renaming this file breaks publishing until both records are updated.
+name: Publish
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to TestPyPI'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
-  id-token: write  # Required for trusted publishing
-  attestations: write  # Required for provenance
 
 jobs:
-  build-and-publish:
+  build:
+    name: Build and check
     runs-on: ubuntu-latest
-    environment: pypi
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
 
-      - name: Install Tools
+      - name: Install tools
         run: pip install hatch twine
+
+      - name: Check the version is consistent
+        # pyproject.toml and src/zeusdb/__init__.py both carry the version, and
+        # a tagged run must agree with both. docs/source/conf.py carries a
+        # third copy and is deliberately not gated here, because a stale
+        # documentation string must not block a release.
+        run: |
+          project_version=$(hatch version)
+          module_version=$(grep -oP '^__version__ = "\K[^"]+' src/zeusdb/__init__.py)
+          echo "pyproject.toml:        $project_version"
+          echo "src/zeusdb/__init__.py: $module_version"
+          if [ "$project_version" != "$module_version" ]; then
+            echo "::error::pyproject.toml and src/zeusdb/__init__.py disagree"
+            exit 1
+          fi
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            tag_version="${GITHUB_REF_NAME#v}"
+            echo "tag:                   $tag_version"
+            if [ "$tag_version" != "$project_version" ]; then
+              echo "::error::tag ${GITHUB_REF_NAME} does not match version $project_version"
+              exit 1
+            fi
+          fi
 
       - name: Build package
         run: hatch build
@@ -39,7 +93,93 @@ jobs:
           file dist/* || true
 
       - name: Validate distribution metadata with Twine
-        run: twine check dist/*
+        run: twine check --strict dist/*
+
+      - name: Install and import the built wheel
+        # Catches a wheel that builds but does not import, and confirms the
+        # declared constraint resolves to something providing every re-exported
+        # name. This is the test suite's job too, but the suite runs against
+        # the working tree and this runs against the artifact being published.
+        run: |
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install --quiet dist/*.whl
+          /tmp/smoke/bin/python -c "
+          import zeusdb
+          print('zeusdb', zeusdb.__version__)
+          for name in zeusdb.__all__:
+              getattr(zeusdb, name)
+          import zeusdb.logging_config
+          print('resolved every name in __all__ and the logging_config submodule')
+          "
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    runs-on: ubuntu-latest
+    # Prerelease tags, and dispatch runs with the publish box ticked.
+    if: >-
+      ${{ (github.event_name == 'push'
+      && (contains(github.ref_name, 'a')
+      || contains(github.ref_name, 'b')
+      || contains(github.ref_name, 'rc')))
+      || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
+    needs: build
+    permissions:
+      # Used to sign the release artifacts
+      id-token: write
+      # Used to generate artifact attestation
+      attestations: write
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/zeusdb/
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'dist/*'
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    # Stable tags only. A dispatch run never reaches production.
+    if: >-
+      ${{ github.event_name == 'push'
+      && !(contains(github.ref_name, 'a')
+      || contains(github.ref_name, 'b')
+      || contains(github.ref_name, 'rc')) }}
+    needs: build
+    permissions:
+      # Used to sign the release artifacts
+      id-token: write
+      # Used to generate artifact attestation
+      attestations: write
+    environment:
+      name: pypi
+      url: https://pypi.org/project/zeusdb/
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
