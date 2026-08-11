@@ -14,8 +14,8 @@ A high-performance LlamaIndex integration for ZeusDB, bringing enterprise-grade 
 🚀 **High Performance**
 
 - Rust-powered vector database backend
-- Advanced HNSW indexing for sub-millisecond search
-- Product Quantization for 4x-256x memory compression
+- Advanced HNSW indexing for fast approximate nearest neighbor search
+- Product Quantization for memory compression, with reranking to hold accuracy
 - Concurrent search with automatic parallelization
 
 🏢 **Enterprise Ready**
@@ -262,7 +262,7 @@ print(f"   Vector count: {loaded_store.get_vector_count()}")
 
 - The path is a directory, not a single file. Ensure the target is writable.
 - Saved indexes are cross-platform and include format/version info for compatibility checks.
-- If you used PQ, both the compression model and state are preserved—no need to retrain after loading.
+- If you used PQ, both the compression model and state are preserved, so there is no need to retrain after loading.
 
 ### Memory-Efficient Setup with Quantization
 
@@ -467,7 +467,7 @@ else:
 Key stats: vectors=3, space=cosine
 Vector count: 3
 Index info: HNSWIndex(dim=1536, space=cosine, m=16, ef_construction=200, expected_size=10000, vectors=3, quantization=none)
-Is quantized: False
+Index is not quantized
 ```
 
 ### Enterprise Logging
@@ -540,9 +540,11 @@ except Exception as e:
 
 ## Requirements
 
-- **Python**: 3.10 or higher
-- **ZeusDB**: 0.0.8 or higher
-- **LlamaIndex Core**: 0.14.4 or higher
+`llama-index-vector-stores-zeusdb` declares the following, and these are the constraints an install resolves against.
+
+- **Python**: `>=3.10,<4.0`
+- **ZeusDB**: `zeusdb>=0.0.8`
+- **LlamaIndex Core**: `llama-index-core>=0.14.6`
 
 ## Installation from Source
 

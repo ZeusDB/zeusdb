@@ -16,7 +16,7 @@ Whether you're powering document search, enabling natural language interfaces, o
 
 🔍 Approximate Nearest Neighbor (ANN) search using HNSW for lightning fast results
 
-📦 Product Quantization (PQ) for compact storage, faster distance computations, and scalability for Big Data
+📦 Product Quantization (PQ) for compact storage, with reranking to hold accuracy
 
 📥 Flexible input formats, including native Python types and NumPy arrays
 
@@ -34,7 +34,7 @@ ZeusDB Vector Database supports the following metrics for vector similarity sear
 
 | Metric | Description                          | Accepted Values (case-insensitive)  |
 |--------|--------------------------------------|--------|
-| cosine | Cosine Distance (1 - Cosine Similiarity) | "cosine", "COSINE", "Cosine" |
+| cosine | Cosine Distance (1 - Cosine Similarity) | "cosine", "COSINE", "Cosine" |
 | l1     | Manhattan distance                   | "l1", "L1" |
 | l2     | Euclidean distance                 | "l2", "L2" |
 
@@ -44,9 +44,13 @@ ZeusDB Vector Database supports the following metrics for vector similarity sear
 All distance metrics in ZeusDB Vector Database return distance values, not similarity scores:
 
  - Lower values = more similar
- - A score of 0.0 means a perfect match
+ - A vector identical to the query scores 0.0, or a value within floating point error of it
 
 This applies to all distance types, including cosine.
+
+Under `cosine`, vectors are normalized to unit length when they are stored. A vector you read back with `return_vector=True` or `get_records()` is therefore the normalized form, not the values you supplied. Under `l1` and `l2` the values are stored unchanged.
+
+A zero vector has no direction, so under `cosine` it sits at distance 1.0 from everything, including itself.
 
 
 
@@ -65,4 +69,6 @@ persistence
 metadata_filtering
 utilities
 logging
+upgrading
 integrations/index
+```

@@ -4,15 +4,15 @@ This guide will help you get up and running quickly with high-performance vector
 
 ## 📦 Installation
 
-You can install ZeusDB Vector Database with 'uv' or alternatively using 'pip'.
+You can install ZeusDB with 'uv' or alternatively using 'pip'.
 
 Recommended (with uv):
-```python
+```bash
 uv pip install zeusdb
 ```
 
 Alternatively (just with pip):
-```{code-block} python
+```bash
 pip install zeusdb
 ```
 
@@ -44,32 +44,24 @@ records = [
 
 # Upload records using the `add()` method
 add_result = index.add(records)
-print("\n--- Add Results Summary ---")
 print(add_result.summary())
 
 # Perform a similarity search and print the top 2 results
-# Query Vector
 query_vector = [0.1, 0.2, 0.3, 0.1, 0.4, 0.2, 0.6, 0.7]
 
-# Query with no filter (all documents)
 results = index.search(vector=query_vector, filter=None, top_k=2)
-print("\n--- Query Results Output - Raw ---")
-print(results)
 
-print("\n--- Query Results Output - Formatted ---")
 for i, res in enumerate(results, 1):
-    print(f"{i}. ID: {res['id']}, Score: {res['score']:.4f}, Metadata: {res['metadata']}")
+    print(f"{i}. ID: {res['id']}, Score: {res['score']:.6f}, Metadata: {res['metadata']}")
 ```
 
 *Results Output:*
 ```text
---- Add Results Summary ---
-✅ 5 inserted, ❌ 0 errors
-
---- Raw Results Format ---
-[{'id': 'doc_001', 'score': 0.0, 'metadata': {'author': 'Alice'}}, {'id': 'doc_003', 'score': 0.0009883458260446787, 'metadata': {'author': 'Alice'}}]
-
---- Formatted Results ---
-1. ID: doc_001, Score: 0.0000, Metadata: {'author': 'Alice'}
-2. ID: doc_003, Score: 0.0010, Metadata: {'author': 'Alice'}
+5 inserted, 0 errors
+1. ID: doc_001, Score: 0.000000, Metadata: {'author': 'Alice'}
+2. ID: doc_003, Score: 0.000988, Metadata: {'author': 'Alice'}
 ```
+
+`add_result.summary()` returns a plain ASCII string, so it prints on any console encoding. The same counts are on `add_result.total_inserted` and `add_result.total_errors` if you want the numbers rather than the sentence.
+
+Scores are distances, so lower means more similar. A vector identical to the query scores 0.0, or a value within floating point error of it.

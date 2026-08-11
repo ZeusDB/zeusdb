@@ -6,8 +6,8 @@ A high-performance LangChain integration for ZeusDB, bringing enterprise-grade v
 
 🚀 **High Performance**
 - Rust-powered vector database backend
-- Advanced HNSW indexing for sub-millisecond search
-- Product Quantization for 4x-256x memory compression
+- Advanced HNSW indexing for fast approximate nearest neighbor search
+- Product Quantization for memory compression, with reranking to hold accuracy
 - Concurrent search with automatic parallelization
 
 🎯 **LangChain Native**
@@ -164,9 +164,8 @@ For large datasets, use Product Quantization to reduce memory usage:
 # Create quantized index for memory efficiency
 quantization_config = {
     'type': 'pq',
-    'subvectors': 8,
-    'bits': 8,
-    'training_size': 10000
+    'training_size': 10000,
+    'storage_mode': 'quantized_with_raw'  # Keep raw vectors so search can rerank
 }
 
 vdb = VectorDatabase()
@@ -174,6 +173,7 @@ index = vdb.create(
     index_type="hnsw",
     dim=1536,
     space="cosine",
+    expected_size=50000,
     quantization_config=quantization_config
 )
 
@@ -183,7 +183,7 @@ vector_store = ZeusDBVectorStore(
 )
 ```
 
-Please refer to our [documentation](https://docs.zeusdb.com/en/latest/vector_database/product_quantization.html) for helpful configuration guidelines and recommendations for setting up quantization.
+`quantized_with_raw` lets search rerank against the raw vectors, which holds recall at the level of an unquantized index. The default `quantized_only` mode saves more memory and returns far fewer of the correct results. Please refer to our [documentation](https://docs.zeusdb.com/en/latest/vector_database/product_quantization.html) for configuration guidelines and the measured trade-offs.
 
 <br />
 
@@ -221,7 +221,7 @@ print("store peek:", loaded_store.zeusdb_index.list(2))
 **Notes**
  - The path is a directory, not a single file. Ensure the target is writable.
  - Saved indexes are cross-platform and include format/version info for compatibility checks.
- - If you used PQ, both the compression model and state are preserved—no need to retrain after loading.
+ - If you used PQ, both the compression model and state are preserved, so there is no need to retrain after loading.
  - You can continue to use all vector store APIs (similarity_search, retrievers, etc.) on the loaded_store.
 
 For further details (including file structure, and further comprehensive examples), see the [documentation](https://docs.zeusdb.com/en/latest/vector_database/persistence.html).
@@ -234,7 +234,7 @@ Use these to control scoring, diversity, metadata filtering, and retriever integ
 
 #### Similarity search with scores
 
-Returns `(Document, raw_distance)` pairs from ZeusDB — **lower distance = more similar**.  
+Returns `(Document, raw_distance)` pairs from ZeusDB, where **lower distance = more similar**.  
 If you prefer normalized relevance in `[0, 1]`, use `similarity_search_with_relevance_scores`.
 
 ```python
@@ -499,7 +499,7 @@ import logging
 
 # Operations are automatically logged with performance metrics
 vector_store.add_documents(docs)
-# Logs: {"operation":"vector_addition","total_inserted":2,"duration_ms":45}
+# Logs: {"operation":"add_vectors_complete","total_inserted":2,"total_errors":0,"duration_ms":45}
 
 # Control logging with environment variables if needed
 # ZEUSDB_LOG_LEVEL=debug ZEUSDB_LOG_FORMAT=json python your_app.py
@@ -553,9 +553,11 @@ except Exception as e:
 
 ## Requirements
 
-- **Python**: 3.10 or higher
-- **ZeusDB**: 0.0.8 or higher
-- **LangChain Core**: 0.3.74 or higher
+`langchain-zeusdb` declares the following, and these are the constraints an install resolves against.
+
+- **Python**: `>=3.10`
+- **ZeusDB**: `zeusdb>=0.0.8`
+- **LangChain Core**: `langchain-core>=0.3.74,<0.4`
 
 ## Installation from Source
 
@@ -572,8 +574,8 @@ In internal benchmarks, ZeusDB has demonstrated exceptional performance for larg
 | Operation | Performance | Notes |
 |-----------|-------------|-------|
 | Index Creation | 1M+ vectors/min | Depends on vector dimension |
-| Search Latency | <1ms | Sub-millisecond for most queries |
-| Memory Usage | 50-90% reduction | With Product Quantization |
+| Search Latency | <1ms | Small unquantized indexes; grows with corpus size |
+| Memory Usage | Up to 78% reduction | Measured with Product Quantization at 50,000 records of dim 1536; varies with dimension and storage mode |
 | Concurrent QPS | 10,000+ | Multi-threaded search |
 
 ⚠️ Note: These figures represent internal benchmark results under specific test conditions. Actual performance may vary depending on hardware, vector dimensions, dataset size, and workload characteristics.
@@ -588,11 +590,8 @@ In internal benchmarks, ZeusDB has demonstrated exceptional performance for larg
 
 ## Compatibility
 
-### LangChain Versions
-- **LangChain Core**: 0.3.74+
-
 ### Distance Metrics
-- **Cosine**: Default, normalized similarity
+- **Cosine**: Default; vectors are normalized when stored, scores are distances
 - **Euclidean (L2)**: Geometric distance
 - **Manhattan (L1)**: City-block distance
 
