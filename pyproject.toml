@@ -1,22 +1,26 @@
 [project]
 name = "zeusdb"
-version = "0.0.8"
+version = "0.1.0"
 description = "Ultra-light and blazingly-fast database management system"
 readme = "README.md"
 authors = [
     { name = "ZeusDB", email = "contact@zeusdb.com" }
 ]
 requires-python = ">=3.10"
-license = {file = 'LICENSE'}
+# PEP 639 SPDX expression, matching zeusdb-vector-database. The deprecated
+# table form and the paired "License ::" classifier are both superseded, and
+# hatchling rejects the classifier alongside this string.
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering",
@@ -40,11 +44,18 @@ keywords = [
   "approximate nearest neighbor",
   "approximate nearest neighbor search",
 ]
+# Floored at 0.5.0 because the names re-exported from src/zeusdb/__init__.py
+# do not all exist below it. Capped below 0.6.0 because this package mirrors a
+# public surface it does not control, and 0.5.0 reached users of an uncapped
+# >=0.4.1 carrying seventeen breaking changes nobody had opted into.
 dependencies = [
-  "zeusdb-vector-database>=0.4.1",
+  "zeusdb-vector-database>=0.5.0,<0.6.0",
 ]
 
 [project.optional-dependencies]
+dev = [
+  "pytest>=8.4.0",
+]
 docs = [
   "sphinx",
   "pydata-sphinx-theme",
@@ -59,6 +70,10 @@ docs = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+# Scopes collection to the tests directory.
+testpaths = ["tests"]
 
 [project.urls]
 "Repository" = "https://github.com/zeusdb/zeusdb"
