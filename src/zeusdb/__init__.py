@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Any
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # The names re-exported from zeusdb-vector-database. This is exactly that
 # package's own `__all__` at 0.8.0, less `__version__`, which the umbrella
