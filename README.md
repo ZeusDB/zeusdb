@@ -9,7 +9,7 @@
       <td><strong>Meta</strong></td>
       <td>
         <a href="https://pypi.org/project/zeusdb/"><img src="https://img.shields.io/pypi/v/zeusdb?label=PyPI&color=blue"></a>&nbsp;
-        <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%7C3.11%7C3.12%7C3.13-blue?logo=python&logoColor=ffdd54"></a>&nbsp;
+        <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%7C3.11%7C3.12%7C3.13%7C3.14-blue?logo=python&logoColor=ffdd54"></a>&nbsp;
         <a href="https://github.com/zeusdb/zeusdb/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"></a>&nbsp;
         <a href="https://docs.zeusdb.com"><img src="https://readthedocs.org/projects/zeusdb/badge/?version=latest" alt="Documentation Status"></a>&nbsp;
         <a href="https://github.com/ZeusDB"><img src="https://github.com/user-attachments/assets/e140d900-1160-4eaa-85c0-2b3507a5f0f5" alt="ZeusDB"></a>&nbsp;
@@ -135,12 +135,12 @@ for i, res in enumerate(results, 1):
 *Output*
 ```
 --- Add Results Summary ---
-✅ 5 inserted, ❌ 0 errors
+5 inserted, 0 errors
 
---- Raw Results Format ---
-[{'id': 'doc_001', 'score': 0.0, 'metadata': {'author': 'Alice'}}, {'id': 'doc_003', 'score': 0.0009883458260446787, 'metadata': {'author': 'Alice'}}]
+--- Query Results Output - Raw ---
+[{'id': 'doc_001', 'score': 1.1920928955078125e-07, 'metadata': {'author': 'Alice'}}, {'id': 'doc_003', 'score': 0.000988304615020752, 'metadata': {'author': 'Alice'}}]
 
---- Formatted Results ---
+--- Query Results Output - Formatted ---
 1. ID: doc_001, Score: 0.0000, Metadata: {'author': 'Alice'}
 2. ID: doc_003, Score: 0.0010, Metadata: {'author': 'Alice'}
 ```

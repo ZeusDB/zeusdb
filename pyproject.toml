@@ -44,12 +44,12 @@ keywords = [
   "approximate nearest neighbor",
   "approximate nearest neighbor search",
 ]
-# Floored at 0.5.0 because the names re-exported from src/zeusdb/__init__.py
-# do not all exist below it. Capped below 0.6.0 because this package mirrors a
+# Floored at 0.8.0 because the names re-exported from src/zeusdb/__init__.py
+# do not all exist below it. Capped below 0.9.0 because this package mirrors a
 # public surface it does not control, and 0.5.0 reached users of an uncapped
 # >=0.4.1 carrying seventeen breaking changes nobody had opted into.
 dependencies = [
-  "zeusdb-vector-database>=0.5.0,<0.6.0",
+  "zeusdb-vector-database>=0.8.0,<0.9.0",
 ]
 
 [project.optional-dependencies]

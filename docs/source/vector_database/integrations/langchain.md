@@ -575,7 +575,7 @@ In internal benchmarks, ZeusDB has demonstrated exceptional performance for larg
 |-----------|-------------|-------|
 | Index Creation | 1M+ vectors/min | Depends on vector dimension |
 | Search Latency | <1ms | Small unquantized indexes; grows with corpus size |
-| Memory Usage | Up to 78% reduction | Measured with Product Quantization at 50,000 records of dim 1536; varies with dimension and storage mode |
+| Memory Usage | Up to 79% reduction | Measured with `quantized_only` Product Quantization at 50,000 records of real embeddings of dim 1536; varies with dimension and storage mode |
 | Concurrent QPS | 10,000+ | Multi-threaded search |
 
 ⚠️ Note: These figures represent internal benchmark results under specific test conditions. Actual performance may vary depending on hardware, vector dimensions, dataset size, and workload characteristics.
