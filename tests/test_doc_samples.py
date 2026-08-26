@@ -19,8 +19,18 @@ Not executed:
 Output comparison is a subsequence match: every non-empty line of the shown
 output must appear in the captured stdout, in order. This tolerates the
 progress lines save() and load() print, which the pages state are omitted.
+
+A page runs to the end whatever happens. Every failing block is collected and
+reported together, so one run of the suite lists everything wrong on a page
+rather than the first thing. Because the blocks share a namespace, a block that
+raises leaves later blocks without the names it would have bound, and those
+later blocks fail in turn. Such a failure is reported as following from the
+earlier one, with the names involved, so that a single broken sample is not
+read as several.
 """
 
+import ast
+import builtins
 import io
 import re
 import warnings
@@ -97,8 +107,11 @@ def extract_blocks(text: str):
     return blocks
 
 
-def assert_subsequence(expected: str, actual: str, page: str, lineno: int):
-    """Every non-empty expected line appears in the actual output, in order."""
+def missing_output_line(expected: str, actual: str):
+    """The first documented output line absent from the actual output, or None.
+
+    Every non-empty expected line must appear in the actual output, in order.
+    """
     actual_lines = [line.rstrip() for line in actual.splitlines()]
     pos = 0
     for want in expected.splitlines():
@@ -108,24 +121,81 @@ def assert_subsequence(expected: str, actual: str, page: str, lineno: int):
         try:
             pos = actual_lines.index(want, pos) + 1
         except ValueError:
-            pytest.fail(
-                f"{page}:{lineno}: documented output line not produced:\n"
-                f"  expected: {want!r}\n"
-                f"  captured stdout:\n{actual}"
-            )
+            return want
+    return None
 
 
-@pytest.mark.parametrize("page", PAGES)
-def test_page_samples_run_and_match_documented_output(page, tmp_path, monkeypatch):
-    """Run a page's samples in order; printed output must match the page."""
-    # .zdb directories and any other artifacts land in the temp directory.
-    monkeypatch.chdir(tmp_path)
+def bound_names(code: str):
+    """Names a block binds at any depth: assignments, imports, defs, classes."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return set()
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                names.add((alias.asname or alias.name).split(".")[0])
+    return names
 
-    text = (DOCS / page).read_text(encoding="utf-8")
-    blocks = extract_blocks(text)
-    assert blocks, f"{page} has no executable python fences"
 
+def free_names(code: str):
+    """Names a block reads without binding them itself.
+
+    A comprehension variable or a loop target is bound by the block that uses
+    it, so it is not a dependency on any earlier block.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return set()
+    loaded = {
+        node.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+    }
+    return loaded - bound_names(code)
+
+
+def cascade_note(code: str, namespace: dict, raised_blocks: list):
+    """Explain a block's exception as a consequence of an earlier one, or None.
+
+    A block that raised did not bind everything it would have. When a later
+    block reads one of those names and the name is absent from the shared
+    namespace, the later failure follows from the earlier one.
+    """
+    if not raised_blocks:
+        return None
+    wanted = {
+        name
+        for name in free_names(code)
+        if name not in namespace and not hasattr(builtins, name)
+    }
+    if not wanted:
+        return None
+    causes = []
+    for lineno, names in raised_blocks:
+        hit = sorted(wanted & names)
+        if hit:
+            causes.append(f"line {lineno} binds {', '.join(hit)}")
+    if not causes:
+        return None
+    return "follows from the earlier failure: " + "; ".join(causes)
+
+
+def indent(text: str, prefix: str = "    ") -> str:
+    return "\n".join(prefix + line for line in text.splitlines())
+
+
+def run_page(page: str, blocks: list):
+    """Run a page's blocks in order in one namespace; return (lineno, message) failures."""
     namespace = {"__name__": "__main__"}
+    failures = []
+    raised_blocks = []  # (lineno, names the block would have bound)
     for lineno, code, expected in blocks:
         captured = io.StringIO()
         with warnings.catch_warnings():
@@ -135,6 +205,106 @@ def test_page_samples_run_and_match_documented_output(page, tmp_path, monkeypatc
                 try:
                     exec(compile(code, f"{page}:{lineno}", "exec"), namespace)
                 except Exception as e:  # noqa: BLE001 - report the sample that broke
-                    pytest.fail(f"{page}:{lineno}: sample raised {type(e).__name__}: {e}")
+                    note = cascade_note(code, namespace, raised_blocks)
+                    message = f"sample raised {type(e).__name__}: {e}"
+                    if note:
+                        message += f"\n  {note}"
+                    failures.append((lineno, message))
+                    raised_blocks.append((lineno, bound_names(code)))
+                    continue
         if expected is not None:
-            assert_subsequence(expected, captured.getvalue(), page, lineno)
+            missing = missing_output_line(expected, captured.getvalue())
+            if missing is not None:
+                failures.append((
+                    lineno,
+                    "documented output line not produced:\n"
+                    f"  expected: {missing!r}\n"
+                    "  captured stdout:\n"
+                    f"{indent(captured.getvalue())}",
+                ))
+    return failures
+
+
+@pytest.mark.parametrize("page", PAGES)
+def test_page_samples_run_and_match_documented_output(page, tmp_path, monkeypatch):
+    """Run a page's samples in order; every block must run and match the page."""
+    # .zdb directories and any other artifacts land in the temp directory.
+    monkeypatch.chdir(tmp_path)
+
+    text = (DOCS / page).read_text(encoding="utf-8")
+    blocks = extract_blocks(text)
+    assert blocks, f"{page} has no executable python fences"
+
+    failures = run_page(page, blocks)
+    if failures:
+        report = "\n".join(f"{page}:{lineno}: {message}" for lineno, message in failures)
+        pytest.fail(
+            f"{page}: {len(failures)} of {len(blocks)} blocks failed\n{report}",
+            pytrace=False,
+        )
+
+
+HARNESS_PROOF_PAGE = """\
+# Proof page
+
+```python
+first = 1
+print("first ran")
+```
+
+*Output*
+```text
+first ran
+```
+
+```python
+raise RuntimeError("second block breaks before binding")
+second = 2
+```
+
+```python
+print("third reads", second)
+```
+
+```python
+print("fourth prints", first)
+```
+
+*Output*
+```text
+fourth prints something else
+```
+
+```python
+print("fifth ran")
+```
+
+*Output*
+```text
+fifth ran
+```
+"""
+
+
+def test_every_failing_block_on_a_page_is_reported():
+    """A page runs to the end and every failure is reported, causes attributed.
+
+    Five blocks. The second raises before binding `second`, the third reads
+    `second` and fails as a consequence, the fourth prints something the page
+    does not show, and the first and fifth are fine. All three failures must
+    appear in one report, and the third must be attributed to the second.
+    """
+    blocks = extract_blocks(HARNESS_PROOF_PAGE)
+    assert len(blocks) == 5
+
+    failures = run_page("proof.md", blocks)
+    reported = [lineno for lineno, _ in failures]
+    messages = dict(failures)
+
+    second, third, fourth = blocks[1][0], blocks[2][0], blocks[3][0]
+    assert reported == [second, third, fourth]
+    assert messages[second].startswith("sample raised RuntimeError")
+    assert messages[third].startswith("sample raised NameError")
+    assert f"follows from the earlier failure: line {second} binds second" in messages[third]
+    assert "documented output line not produced" in messages[fourth]
+    assert "follows from" not in messages[fourth]

@@ -47,11 +47,12 @@ jobs:
   build:
     name: Build and check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.13"
 
@@ -84,6 +85,20 @@ jobs:
       - name: Build package
         run: hatch build
 
+      - name: Record a SHA-256 digest of every artefact
+        # Taken immediately after the build. The artefacts leave this job
+        # through the artifact store and the publish jobs verify what they
+        # download against these digests before attesting or uploading, so a
+        # file changed by a later step here, in the store or in transit is
+        # caught. The digests travel as a separate artifact, because the
+        # publish step uploads every file under dist.
+        run: |
+          set -euo pipefail
+          mkdir -p digests
+          cd dist
+          sha256sum -- * > ../digests/SHA256SUMS
+          cat ../digests/SHA256SUMS
+
       - name: Inspect build artifacts
         run: |
           echo "Contents of dist/ directory:"
@@ -113,14 +128,21 @@ jobs:
           "
 
       - name: Upload distributions
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dist
           path: dist
 
+      - name: Upload the digests recorded at build time
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: digests
+          path: digests
+
   publish-testpypi:
     name: Publish to TestPyPI
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # Prerelease tags, and dispatch runs with the publish box ticked.
     if: >-
       ${{ (github.event_name == 'push'
@@ -139,26 +161,52 @@ jobs:
       url: https://test.pypi.org/project/zeusdb/
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: dist
           path: dist
 
+      - name: Download the digests recorded at build time
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: digests
+          path: digests
+
+      - name: Verify every artefact against the digest recorded when it was built
+        # Before attestation and before upload, so nothing is signed or
+        # published that is not byte for byte what the build job produced.
+        # Two checks: every file in dist has a recorded digest, and every
+        # recorded digest matches. --strict makes a malformed line a failure
+        # rather than a warning.
+        run: |
+          set -euo pipefail
+          cat digests/SHA256SUMS
+          expected=$(wc -l < digests/SHA256SUMS)
+          actual=$(ls -1 dist | wc -l)
+          if [ "$expected" -ne "$actual" ]; then
+            echo "::error::dist holds $actual file(s) but $expected digest line(s) were recorded at build time."
+            exit 1
+          fi
+          cd dist
+          sha256sum --check --strict ../digests/SHA256SUMS
+
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: 'dist/*'
 
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           packages-dir: dist
           repository-url: https://test.pypi.org/legacy/
+          attestations: true
           skip-existing: true
 
   publish-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # Stable tags only. A dispatch run never reaches production.
     if: >-
       ${{ github.event_name == 'push'
@@ -176,17 +224,42 @@ jobs:
       url: https://pypi.org/project/zeusdb/
     steps:
       - name: Download distributions
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: dist
           path: dist
 
+      - name: Download the digests recorded at build time
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: digests
+          path: digests
+
+      - name: Verify every artefact against the digest recorded when it was built
+        # Before attestation and before upload, so nothing is signed or
+        # published that is not byte for byte what the build job produced.
+        # Two checks: every file in dist has a recorded digest, and every
+        # recorded digest matches. --strict makes a malformed line a failure
+        # rather than a warning.
+        run: |
+          set -euo pipefail
+          cat digests/SHA256SUMS
+          expected=$(wc -l < digests/SHA256SUMS)
+          actual=$(ls -1 dist | wc -l)
+          if [ "$expected" -ne "$actual" ]; then
+            echo "::error::dist holds $actual file(s) but $expected digest line(s) were recorded at build time."
+            exit 1
+          fi
+          cd dist
+          sha256sum --check --strict ../digests/SHA256SUMS
+
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: 'dist/*'
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           packages-dir: dist
+          attestations: true
