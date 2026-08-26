@@ -20,19 +20,19 @@ vector : *list[float], list[list[float]], or np.ndarray, required*
 :   The query vector (single: `list[float]` or 1D `np.ndarray`) or batch of query vectors (`list[list[float]]` or 2D `np.ndarray`) to compare against the index. Must match the index dimension and contain only finite values. A query vector containing `NaN` or an infinity raises `ValueError`.
 
 filter : *dict[str, Any] or None, default None*
-:   Optional metadata filter. A field maps either to a plain value, meaning equality, or to a dict of operators. See [Metadata Filtering](../metadata_filtering.md) for the operators and their behaviour.
+:   Optional metadata filter. A field maps either to a plain value, meaning equality, or to a dict of operators, and `$and`, `$or` and `$not` compose whole filters. See [Metadata Filtering](../metadata_filtering.md) for the operators and their behaviour.
 
 top_k : *int, default 10*
-:   Number of nearest neighbors to return for each query vector.
+:   Number of nearest neighbors to return for each query vector, from 0 to 65,536. A larger value raises `ValueError`.
 
 ef_search : *int or None, default None*
-:   Search complexity parameter. Higher values improve accuracy at the cost of speed. The default depends on the distance metric: `max(2 × top_k, 100)` for `cosine` and `max(2 × top_k, 150)` for `l1` and `l2`. It has no effect on a reranked quantized search, where the traversal is widened to the rerank fetch instead; see [Product Quantization](../product_quantization.md).
+:   Search complexity parameter, from 0 to 131,072. Higher values improve accuracy at the cost of speed. The default depends on the distance metric: `max(2 × top_k, 100)` for `cosine` and `dot`, and `max(2 × top_k, 150)` for `l1` and `l2`. It has no effect on a reranked quantized search, where the traversal is widened to the rerank fetch instead; see [Product Quantization](../product_quantization.md).
 
 return_vector : *bool, default False*
-:   If `True`, the result objects will include the stored embedding vector. Under `cosine` this is the normalized form, not the values you supplied. Useful for downstream processing like re-ranking or hybrid search.
+:   If `True`, the result objects will include the stored embedding vector as a `list` of Python floats. Under `cosine` this is the normalized form, not the values you supplied; under `l1`, `l2` and `dot` it is the values as given. Useful for downstream processing like re-ranking or hybrid search.
 
 rerank : *int or None, default None*
-:   Candidates fetched per requested result before rescoring against raw vectors. Only applies to a quantized index whose `storage_mode` is `quantized_with_raw`; an unquantized or `quantized_only` index ignores it. Omitted, the fetch is calibrated from the index's own data. `rerank=0` turns reranking off and returns ADC scores. See [Product Quantization](../product_quantization.md).
+:   Candidates fetched per requested result before rescoring against raw vectors. Only applies to a quantized index whose `storage_mode` is `quantized_with_raw`; an unquantized or `quantized_only` index ignores it. Omitted, the fetch is calibrated from the index's own data. `rerank=0` turns reranking off and returns the distances to the reconstructions. See [Product Quantization](../product_quantization.md).
 ```
 
 
@@ -53,9 +53,9 @@ Batch Query
 :   Returns `list[list[dict]]` - a list of result lists, one for each input query vector, in the order the queries were given.
 ```
 
-**The filter is applied after the graph search, not during it.** The index finds the `top_k` nearest vectors first and then discards the ones the filter rejects, so a selective filter can return fewer than `top_k` results, or none at all. Raise `top_k` when you filter.
+**The filter decides which records are ranked, not which results survive.** A search asking for five results with a filter matching a hundred records returns the five nearest of those hundred. `top_k` is the page size and nothing else, so there is no need to raise it when you filter. A filter matching fewer records than `top_k` returns that many, and one matching none returns an empty list. See [Metadata Filtering](../metadata_filtering.md) for what a filtered search costs and how to make it cheap.
 
-**On a reranked quantized search the score is the raw-vector distance.** With `rerank=0` it is the ADC estimate. The two are not comparable, so a threshold tuned against one does not carry to the other.
+**On a quantized index the score is a distance to the record's reconstruction unless the page is reranked.** With rerank on, which is the default for `quantized_with_raw`, the score is the exact distance to the raw vector. With `rerank=0` it is the distance to the reconstruction. Both are on the scale the index's own space reports, so a page is on one scale whichever you asked for, but the two are not equal and the difference is the quantization error.
 
 ## Examples
 
@@ -96,7 +96,7 @@ doc_003 0.000988 {'author': 'Alice'}
 
 **🔍 Search Example 2 - Query with metadata filter**
 
-The filter is applied to the `top_k` nearest results after the similarity search.
+The filter chooses which records are ranked, so the page holds the nearest of Alice's documents and nothing else.
 
 ```python
 results = index.search(vector=query_vector, filter={"author": "Alice"}, top_k=5)
@@ -111,11 +111,13 @@ doc_003 0.000988 {'author': 'Alice'}
 doc_005 0.001143 {'author': 'Alice'}
 ```
 
+Three records match, so a page of five holds three. That is not a truncation.
+
 <br />
 
 **🔍 Search Example 3 - Search results include vectors**
 
-You can optionally return the stored embedding vectors alongside metadata and similarity scores by setting `return_vector=True`. Under `cosine` the stored vector is normalized to unit length, which is why the values below differ from the ones supplied.
+You can optionally return the stored embedding vectors alongside metadata and similarity scores by setting `return_vector=True`. Under `cosine` the stored vector is normalized to unit length, which is why the values below differ from the ones supplied. The vector is a `list` of Python floats, from both `search()` and `get_records()`.
 
 ```python
 results = index.search(vector=query_vector, top_k=1, return_vector=True)
@@ -155,7 +157,7 @@ query 1: [('doc_002', 0.0), ('doc_004', 0.002238)]
 
 **🔍 Search Example 5 - Batch Search with NumPy Array**
 
-Perform a similarity search on multiple query vectors from a NumPy array, returning results for each query.
+Perform a similarity search on multiple query vectors from a NumPy array, returning results for each query. A 2-D array of `float32` or `float64` is read directly.
 
 ```python
 import numpy as np
@@ -177,7 +179,7 @@ query 1: ['doc_002', 'doc_004']
 
 **🔍 Search Example 6 - Batch Search with metadata filter**
 
-The same filter is applied to every query in the batch. The second query below returns nothing, because both of its two nearest neighbours are Bob's.
+The same filter is applied to every query in the batch. Each query gets the two nearest of Alice's documents, which for the second query are not among its two nearest documents overall.
 
 ```python
 results = index.search(batch, filter={"author": "Alice"}, top_k=2)
@@ -188,5 +190,29 @@ for q, hits in enumerate(results):
 *Output*
 ```text
 query 0: ['doc_001', 'doc_003']
-query 1: []
+query 1: ['doc_005', 'doc_003']
+```
+
+<br />
+
+**🔍 Search Example 7 - The bounds on `top_k` and `ef_search`**
+
+Both are capped, because each sizes an allocation the graph makes before it visits a node.
+
+```python
+try:
+    index.search(query_vector, top_k=65537)
+except ValueError as error:
+    print(str(error).split(".")[0])
+
+try:
+    index.search(query_vector, ef_search=131073)
+except ValueError as error:
+    print(str(error).split(".")[0])
+```
+
+*Output*
+```text
+top_k must be at most 65536, got 65537
+ef_search must be at most 131072, got 131073
 ```

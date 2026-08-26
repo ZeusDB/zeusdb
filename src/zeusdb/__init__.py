@@ -31,13 +31,14 @@ if TYPE_CHECKING:
 __version__ = "0.1.0"
 
 # The names re-exported from zeusdb-vector-database. This is exactly that
-# package's own `__all__` at 0.5.0, less `__version__`, which the umbrella
+# package's own `__all__` at 0.8.0, less `__version__`, which the umbrella
 # defines for itself above.
 #
 # HNSWIndex and AddResult cannot be constructed directly; they are here so a
 # caller can name the types `create()` and `add()` hand back. The three logging
-# functions are here because the documented logging recipe calls them at
-# package level.
+# initialisers are here because the documented logging recipe calls them at
+# package level, and `shutdown_logging` because it is the one way to drain the
+# log file before a process ends without running the exit hooks.
 _VECTOR_DATABASE_EXPORTS = (
     "AddResult",
     "HNSWIndex",
@@ -45,6 +46,7 @@ _VECTOR_DATABASE_EXPORTS = (
     "init_file_logging",
     "init_logging",
     "is_logging_initialized",
+    "shutdown_logging",
 )
 
 # Exported name -> (pip package name for the install hint, module to import).
@@ -65,6 +67,7 @@ __all__ = [
     "init_file_logging",
     "init_logging",
     "is_logging_initialized",
+    "shutdown_logging",
 ]
 
 

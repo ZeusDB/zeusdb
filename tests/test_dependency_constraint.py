@@ -23,9 +23,10 @@ import zeusdb
 
 DEPENDENCY = "zeusdb-vector-database"
 
-# The release that first exported HNSWIndex, AddResult and the three logging
-# functions. Below it, most of `zeusdb.__all__` cannot resolve.
-REQUIRED_FLOOR = Version("0.5.0")
+# The release that first exported shutdown_logging. 0.5.0 introduced the other
+# five forwarded names, so below 0.8.0 at least one name in `zeusdb.__all__`
+# cannot resolve.
+REQUIRED_FLOOR = Version("0.8.0")
 
 
 def _declared_requirement() -> Requirement:
@@ -47,7 +48,7 @@ def _declared_requirement() -> Requirement:
 
 
 def test_the_floor_is_at_least_the_release_that_provides_every_name():
-    """A floor below 0.5.0 admits an install missing most of `__all__`."""
+    """A floor below 0.8.0 admits an install missing part of `__all__`."""
     specifier = _declared_requirement().specifier
     floors = [
         Version(clause.version)

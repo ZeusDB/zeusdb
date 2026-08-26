@@ -221,9 +221,9 @@ for r in filtered_results:
   Metadata: {'category': 'tech', 'year': 2024}
 ```
 
-**Supported operators:** EQ, NE, GT, GTE, LT, LTE, IN, NIN, ANY, ALL, CONTAINS, TEXT_MATCH, TEXT_MATCH_INSENSITIVE, IS_EMPTY
+**Supported operators:** EQ, NE, GT, GTE, LT, LTE, IN, NIN, ANY, ALL, CONTAINS, TEXT_MATCH, TEXT_MATCH_INSENSITIVE
 
-**Note:** Combine conditions with `AND` only. `OR` and `NOT` conditions are not yet supported by the ZeusDB backend.
+**Note:** Combine conditions with `AND` only. The adapter does not translate `OR` or `NOT` conditions yet, and it translates `IS_EMPTY` to an operator the backend does not accept, so a filter using it raises `ValueError`.
 
 ### Persistence
 

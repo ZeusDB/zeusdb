@@ -32,7 +32,7 @@ Installing `zeusdb` brings in the vector database and its dependencies automatic
 
 | Package | Version installed |
 |---------|---------------------------|
-| [zeusdb-vector-database](https://github.com/ZeusDB/zeusdb-vector-database) | 0.5.x (`>=0.5.0,<0.6.0`) |
+| [zeusdb-vector-database](https://github.com/ZeusDB/zeusdb-vector-database) | 0.8.x (`>=0.8.0,<0.9.0`) |
 | [NumPy](https://numpy.org/) | `>=2.2.6,<3.0.0` (required by the vector database) |
 
 Prebuilt wheels are published for Linux x86_64 and aarch64 (glibc and musl), macOS Apple Silicon, and Windows x86_64.

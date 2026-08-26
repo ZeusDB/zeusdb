@@ -13,8 +13,8 @@ import zeusdb_vector_database
 import zeusdb
 
 # What each re-exported name must resolve to. AddResult and HNSWIndex are types
-# a caller receives rather than constructs; the three logging names are the
-# functions the documented logging recipe calls at package level.
+# a caller receives rather than constructs; the four logging names are the
+# functions the documented logging recipes call at package level.
 EXPECTED_KINDS = {
     "AddResult": type,
     "HNSWIndex": type,
@@ -22,6 +22,7 @@ EXPECTED_KINDS = {
     "init_file_logging": callable,
     "init_logging": callable,
     "is_logging_initialized": callable,
+    "shutdown_logging": callable,
 }
 
 

@@ -17,8 +17,9 @@ Not executed:
   packages
 
 Output comparison is a subsequence match: every non-empty line of the shown
-output must appear in the captured stdout, in order. This tolerates the
-progress lines save() and load() print, which the pages state are omitted.
+output must appear in the captured stdout, in order. This tolerates a sample
+that prints more than the page shows, such as a result whose values the page
+says depend on the data.
 
 A page runs to the end whatever happens. Every failing block is collected and
 reported together, so one run of the suite lists everything wrong on a page
@@ -43,6 +44,7 @@ DOCS = Path(__file__).resolve().parent.parent / "docs" / "source"
 
 # Pages whose samples are executable as written, in reading order.
 PAGES = [
+    "vector_database/index.md",
     "vector_database/getting_started.md",
     "vector_database/usage/create.md",
     "vector_database/usage/add.md",

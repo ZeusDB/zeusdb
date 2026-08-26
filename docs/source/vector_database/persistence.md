@@ -4,13 +4,15 @@ ZeusDB Vector Database provides production-ready persistence capabilities that a
 
 The persistence system supports:
 
-✅ **Complete state preservation** – vectors, per-record metadata, index level metadata, ID mappings, HNSW graph structure, and quantization models  
+✅ **Complete state preservation** – vectors, per-record metadata, index level metadata, ID mappings, HNSW graph structure, declared `indexed_fields`, and quantization models  
 ✅ **Hybrid storage format** – efficient binary encoding for vectors with human-readable JSON for metadata  
 ✅ **Quantization support** – seamlessly handles both raw and quantized storage modes, including the trained codebook and rerank calibration  
 ✅ **Training state recovery** – an index saved mid-collection resumes collecting toward its training threshold  
 ✅ **Format versioning** – a directory this build cannot interpret is refused rather than misread  
+✅ **Atomic saves** – a reader sees the whole previous index or the whole new one  
+✅ **A digest per artefact** – checked on load, so a file that has changed since it was written is refused  
 
-**`save()` and `load()` print progress to stdout.** Every step writes a line. This is not configurable, so redirect stdout if it is a problem in your application.
+**`save()` and `load()` print nothing.** Every step they take is a `debug` log record, so a library caller sees nothing on stdout. Set `ZEUSDB_LOG_LEVEL=debug` to see the steps; see [Logging](logging.md).
 
 ## Saving an Index - .save()
 
@@ -62,9 +64,9 @@ index.save("my_index.zdb")
 print("saved:", sorted(os.listdir("my_index.zdb")))
 ```
 
-*Output, with the progress lines omitted*
+*Output*
 ```text
-saved: ['config.json', 'hnsw_index.hnsw.data', 'hnsw_index.hnsw.graph', 'manifest.json', 'mappings.bin', 'metadata.json', 'vectors.bin']
+saved: ['config.json', 'hnsw_index.zdbgraph', 'manifest.json', 'mappings.bin', 'metadata.json', 'vectors.bin']
 ```
 
 <br />
@@ -107,7 +109,7 @@ results = loaded_index.search(vectors[0].tolist(), top_k=3)
 print("top hit:", results[0]["id"])
 ```
 
-*Output, with the progress lines omitted*
+*Output*
 ```text
 vectors: 1000
 HNSWIndex(dim=1536, space=cosine, m=16, ef_construction=200, expected_size=1000, vectors=1000, quantization=none)
@@ -116,7 +118,7 @@ top hit: doc_0
 
 **Loading reads the saved graph back rather than rebuilding it**, so a reloaded index returns the same result pages as the index that was saved, with the same IDs and the same scores. Load time is proportional to the size of the directory rather than to the cost of building the index: 50,000 records at 1,536 dimensions load in about a second against a build of over two minutes.
 
-The graph is rebuilt by re-inserting every record only when the saved graph cannot be used, which covers a directory whose graph files were lost or damaged and one written by a release too old for this build to interpret. An index saved by an earlier release therefore still loads, with no user action required. Set `ZEUSDB_LOAD_REBUILD_GRAPH=1` to ask for that rebuild on a directory whose graph is perfectly readable, which is how an index built by an earlier release picks up graph improvements made since.
+The graph is rebuilt by re-inserting every record only when the saved graph cannot be used, which covers a directory whose graph file was lost or damaged and one written by a release too old for this build to interpret. An index saved by an earlier release therefore still loads, with no user action required. Set `ZEUSDB_LOAD_REBUILD_GRAPH=1` to ask for that rebuild on a directory whose graph is perfectly readable, which is how an index built by an earlier release picks up graph improvements made since. A quantized `cosine` directory saved before 0.8.0 keeps the neighbour lists it was saved with, which were wired by squared distance rather than by cosine distance; loading it once with that variable set and saving it again wires it on the current ordering.
 
 <br />
 
@@ -156,12 +158,12 @@ print("storage mode after load:", loaded_index.get_storage_mode())
 print("saved:", sorted(os.listdir("quantized_index.zdb")))
 ```
 
-*Output, with the progress lines omitted*
+*Output*
 ```text
 quantization active: True
 quantization active after load: True
 storage mode after load: quantized_active
-saved: ['config.json', 'hnsw_index.hnsw.data', 'hnsw_index.hnsw.graph', 'manifest.json', 'mappings.bin', 'metadata.json', 'pq_centroids.bin', 'pq_codes.bin', 'quantization.json', 'vectors.bin']
+saved: ['config.json', 'hnsw_index.zdbgraph', 'manifest.json', 'mappings.bin', 'metadata.json', 'pq_centroids.bin', 'pq_codes.bin', 'quantization.json', 'vectors.bin']
 ```
 
 <br/>
@@ -171,19 +173,24 @@ The `.save()` method creates a structured directory containing all index compone
 
 ```text
 my_index.zdb/
-├── manifest.json           # Index metadata and file inventory
-├── config.json             # HNSW configuration and index level metadata
+├── manifest.json           # Index metadata, file inventory and digests
+├── config.json             # HNSW configuration, indexed_fields and index level metadata
 ├── mappings.bin            # ID mappings (binary format)
 ├── metadata.json           # Per-record metadata (JSON format)
 ├── vectors.bin             # Raw vectors (whenever the index holds any)
 ├── quantization.json       # PQ configuration (if enabled)
 ├── pq_centroids.bin        # Trained centroids (if PQ trained)
 ├── pq_codes.bin            # Quantized codes (if PQ active)
-├── hnsw_index.hnsw.graph   # HNSW graph structure
-└── hnsw_index.hnsw.data    # HNSW graph payload
+└── hnsw_index.zdbgraph     # HNSW graph structure and payload
 ```
 
-`manifest.json` lists both graph files under `files_included`. The load path restores the saved graph rather than rebuilding it, so both are required to reopen a directory holding records.
+`manifest.json` lists every file the save wrote under `files_included` and is the last file written, so it is the inventory of what the directory does hold. Beside the list, `file_digests` records each artefact's length and a digest of its contents. The graph is one file. A directory saved by 0.6.0 or earlier holds `hnsw_index.hnsw.graph` and `hnsw_index.hnsw.data` in its place, and opening it still works: the graph is rebuilt once from the stored records, and the next `save()` writes the single file and the digests.
+
+**`load()` refuses a directory that does not hold what its manifest names.** It checks `files_included` before it reads anything, and the graph file is the one exempt artefact, because every record carries what the graph is built from. A directory missing any other file will not open, and the refusal names the file and says what it held. Restore it from a copy; the missing file cannot be rebuilt from the ones that remain. A file the manifest does not name is neither read nor complained about.
+
+**It also refuses a file that is present and has changed.** Each artefact is checked against the length and digest `file_digests` records for it, before anything parses it, so a file edited in place is refused with its name in the message. The graph file carries its own header and payload checksums instead, so the manifest records only its length; a graph file that disagrees is rebuilt rather than refused. A directory saved before 0.8.0 carries no digests, so nothing is verified and it loads exactly as it did.
+
+**It validates what it reads.** `config.json` and `quantization.json` are held to the rules `create()` applies, so a directory saved with `dim` above 65,536 or `ef_construction` above 4,096 does not open under this release, and neither does one pairing `l1` with quantization, whatever release saved it. Open such a directory under the release that saved it, read the records back with `get_records()`, and add them to an index created inside the bounds. A file that is present and does not parse is a different failure with a different message, of the form `Failed to parse config.json` or `Failed to deserialize mappings.bin`.
 
 <br/>
 
@@ -249,13 +256,15 @@ print("filtered hits:", len(filtered))
 print("all checks passed")
 ```
 
-*Output, with the progress lines omitted*
+*Output*
 ```text
 records: 500
 index metadata fields: 3
-filtered hits: 5
+filtered hits: 20
 all checks passed
 ```
+
+The filter matches 125 of the 500 records, so a page of twenty is full. The filter decides which records are ranked, not which results survive; see [Metadata Filtering](metadata_filtering.md).
 
 ### ⚠️ Important Notes on Persistence
 - **Directory, not a file**: The `.save()` method creates a directory. Ensure you have write permissions for the target location.
@@ -264,11 +273,13 @@ all checks passed
 
 - **Version Compatibility**: The manifest records a format version. This build writes 1.1.0 and reads any 1.x. A different major version is refused.
 
-- **Not atomic**: Files are written one at a time into the target directory. An interrupted save leaves a partial directory behind, and a later `load()` of it fails rather than returning a truncated index. Save to a new path and move it into place if you need an atomic swap.
+- **Atomic**: A save writes `<name>.zdbtmp` beside the target and renames it into place, so a reader sees the previous index or the new one and never a mixture. An interrupted save leaves the previous directory intact and loadable, and the staging directory is removed. Replacing an existing directory takes two renames rather than one, because neither Windows nor POSIX can rename a directory over a non-empty one: the target moves to `<name>.zdbold`, the new directory moves in, then `<name>.zdbold` is removed. Between the two renames the target does not exist. A process killed in that window leaves the whole previous index at `<name>.zdbold`, and the next save moves it back.
 
-- **Overwriting is not clean either**: Saving over an existing directory replaces files individually and does not remove ones that no longer apply. Save to a fresh directory.
+- **Overwriting is clean**: The new directory is built from nothing, so an artefact from an earlier save cannot survive. Saving a plain index over a quantized one leaves no `quantization.json`, `pq_centroids.bin` or `pq_codes.bin` behind.
 
-- **Integrity check on load**: The restored record count is checked against the count in `config.json`. A missing or truncated data file fails the load with a message naming what disagreed.
+- **Same volume**: The staging directory is a sibling of the target, so both are on the target's volume and the move is a rename rather than a copy.
+
+- **Integrity checks on load**: Four run, in this order: the format version, then `files_included` against the directory, then each artefact against its recorded length and digest, then the restored record count against the count in `config.json`. A failure names what disagreed.
 
 
 <br />

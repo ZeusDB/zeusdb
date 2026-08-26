@@ -174,13 +174,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-<!-- Add new features here -->
+
+- `shutdown_logging` is importable from `zeusdb`, completing the re-export of `zeusdb-vector-database` 0.8.0's public surface.
+- Documentation for the 0.8.0 surface: `space="dot"`, boolean filter composition, the `nin`, `any`, `all`, `exists`, `is_missing` and `is_null` operators, `indexed_fields`, `len()`, `in`, `count()`, `remove_points()`, `remove_where()`, `delete()`, `clear()`, `update_metadata()`, `rebuild()`, `shrink_to_fit()`, `list()` paging with `offset` and `after`, `get_records(strict=True)`, `AddResult.ids`, the read-only index properties, `shutdown_logging()` and the exit drain, atomic saves and per-artefact digests, the ceilings on `dim`, `ef_construction`, `top_k` and `ef_search`, and the quantization refusals for `l1` and `dot`.
+- Documentation for `zeusdb.logging_config.get_logger` and `operation_context` on the logging page.
+- An "Upgrading to 0.8.0" section on the upgrading page.
+- The vector database landing page's code samples run under the documentation sample test.
 
 ### Changed
-<!-- Add changed behavior here -->
+
+- `zeusdb-vector-database` constraint from `>=0.5.0,<0.6.0` to `>=0.8.0,<0.9.0`.
+- Regenerated `uv.lock`, which pins `zeusdb-vector-database` 0.8.0.
+- The dependency floor test requires 0.8.0, the release that first exported `shutdown_logging`.
+- Documentation corrected for 0.8.0: `dim` is required, a filter decides which records are ranked, the saved graph is one file, saves are atomic and verified, `save()` and `load()` print nothing, every log level spelling is accepted, `list()` returns arrival order, `quantized_with_raw` holds more memory than an unquantized index, and the memory, search and training figures are re-measured.
+- README quick start output matches what the current release prints, and the Python badge lists 3.14.
 
 ### Fixed
-<!-- Add bug fixes here -->
+
+- The LlamaIndex guide listed `IS_EMPTY` as a supported filter operator; the adapter translates it to an operator the backend refuses.
 
 ### Removed
 <!-- Add removals/deprecations here -->
